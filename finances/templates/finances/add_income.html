@@ -1,0 +1,60 @@
+<!-- finances/templates/finances/add_expense.html -->
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Income</title>
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+</head>
+<body>
+    <!-- Header with logo and title -->
+    <header>
+        <img src="https://media.istockphoto.com/id/1423550966/vector/profit-rounded-lines-icon.jpg?s=612x612&w=0&k=20&c=_KFEK2PUIlquKGVUYQ18I2rO6xQ3ieFDEx-xHpXRLTI=" alt=" Logo" class="logo">
+        <h2>FinSage</h2>
+    </header>
+
+    <!-- Main form container (Centered) -->
+    <div class="container">
+        <div class="form-center">
+            <!-- Form Heading (Centered) -->
+            <h2>Add Income</h2>
+
+            <!-- Form starts here -->
+            <form method="POST">
+                {% csrf_token %}
+                
+                <!-- Amount Input -->
+                <div class="input-group">
+                    <label for="amount">Amount</label>
+                    <input type="number" name="amount" id="amount" placeholder="Enter amount" required>
+                </div>
+                
+                <!-- Description Input (Single-line) -->
+                <div class="input-group">
+                    <label for="description">Description</label>
+                    <input type="text" name="description" id="description" placeholder="Enter description" required>
+                </div>
+                
+                <!-- Date Input -->
+                <div class="input-group">
+                    <label for="date">Date</label>
+                    <input type="date" name="date" id="date" required>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="submit-btn">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+
+            <!-- Back Button -->
+            <div class="mt-3">
+                <a href="{% url 'finances:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

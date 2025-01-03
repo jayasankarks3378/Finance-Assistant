@@ -1,0 +1,152 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc); /* Gradient background */
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent background */
+    border-radius: 12px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+/* Container hover effect */
+.container:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    color: #2575fc;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+h3 {
+    font-size: 1rem;
+    margin-top: 20px;
+    color: #555;
+}
+
+h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-color: #2575fc;
+    box-shadow: 0 0 5px rgba(37, 117, 252, 0.6);
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover {
+    border-color: #2575fc;
+}
+
+button[type="submit"] {
+    background: linear-gradient(135deg, #2575fc, #6a11cb); /* Gradient button */
+    color: #fff;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    margin-top: 20px;
+}
+
+button[type="submit"]:hover {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    transform: scale(1.05);
+}
+
+button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+/* Link Styles */
+a {
+    color: #2575fc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #6a11cb;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 30px 20px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+        font-size: 0.9rem;
+    }
+
+    button[type="submit"] {
+        font-size: 1rem;
+    }
+}

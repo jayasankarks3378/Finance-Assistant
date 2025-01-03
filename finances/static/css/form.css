@@ -1,0 +1,179 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7fa; /* Light gray background */
+}
+
+/* Header styling (Logo and Title) */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px;
+    background-color: #4CAF50; /* Green background */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+header .logo {
+    height: 40px;
+    margin-right: 10px;
+}
+
+header h2 {
+    font-size: 26px;
+    color: white;
+    font-weight: bold;
+}
+
+/* Main container for form (Centering the form) */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+    margin-top: 80px; /* Space for the fixed header */
+}
+
+/* Form Container (Box Styling) */
+.form-center {
+    width: 100%;
+    max-width: 480px;
+    padding: 30px;
+    background-color: #fff;
+    border: 2px solid #ddd; /* Light gray border */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Shadow effect */
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.form-center:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+}
+
+/* Form Title (Centered) */
+.form-center h2 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Input Fields Styling */
+.input-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the inputs */
+    justify-content: center;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    max-width: 400px; /* Limit the input field's width */
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    color: #333;
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* Focus effect for inputs */
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background-color: #fff;
+}
+
+/* Button Styling */
+.submit-btn {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn {
+    width: 100%;
+    max-width: 400px; /* Limit the width of buttons */
+    padding: 14px 0;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #45a049;
+}
+
+.btn-secondary {
+    background-color: #f1f1f1;
+    color: #333;
+    margin-top: 15px;
+}
+
+.btn-secondary:hover {
+    background-color: #ddd;
+}
+
+/* Back Button */
+.mt-3 {
+    margin-top: 30px;
+    text-align: center; /* Center the back button */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .form-center {
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+    }
+
+    .btn {
+        font-size: 14px;
+    }
+
+    header {
+        padding: 15px;
+    }
+
+    header h2 {
+        font-size: 22px;
+    }
+}
