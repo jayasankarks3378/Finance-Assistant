@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | FinSage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #0f766e;
+            --primary-dark: #134e4a;
+            --secondary-color: #0d9488;
+            --accent-color: #2dd4bf;
+            --text-color: #1e293b;
+            --light-bg: #f8fafc;
+            --error-color: #dc2626;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #134e4a, #0f766e, #14b8a6, #5eead4);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .auth-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .auth-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-image {
+            flex: 1;
+            position: relative;
+            display: none;
+            background: linear-gradient(
+                135deg,
+                rgba(15, 118, 110, 0.9),
+                rgba(19, 78, 74, 0.85)
+            ),
+            url('https://media.istockphoto.com/id/1423550966/vector/profit-rounded-lines-icon.jpg?s=612x612&w=0&k=20&c=_KFEK2PUIlquKGVUYQ18I2rO6xQ3ieFDEx-xHpXRLTI=') center/cover;
+        }
+
+        @media (min-width: 768px) {
+            .auth-image {
+                display: block;
+            }
+        }
+
+        .auth-image-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            color: var(--white);
+            text-align: center;
+            background: rgba(15, 118, 110, 0.1);
+            backdrop-filter: blur(8px);
+        }
+
+        .auth-image-logo {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .auth-image-logo i {
+            color: var(--accent-color);
+        }
+
+        .auth-form {
+            flex: 1;
+            padding: 40px;
+            background: var(--light-bg);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            box-shadow: 0 6px 20px rgba(15, 118, 110, 0.2);
+            padding: 6px;
+            background: var(--white);
+        }
+
+        .form-header h2 {
+            color: var(--text-color);
+            font-size: 1.75rem;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-icon-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 40px;
+            font-size: 0.95rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: var(--white);
+            color: var(--text-color);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+        }
+
+        .toggle-password {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-color);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 25px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(15, 118, 110, 0.3);
+        }
+
+        .auth-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .auth-links a:hover {
+            color: var(--primary-dark);
+        }
+
+        .error-list {
+            color: var(--error-color);
+            background-color: rgba(220, 38, 38, 0.1);
+            border: 1px solid var(--error-color);
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-image">
+            <div class="auth-image-overlay">
+                <div class="auth-image-logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span>FinSage</span>
+                </div>
+                <h2>Join FinSage Today!</h2>
+                <p>Start your journey to financial wisdom with our powerful tracking and analytics tools.</p>
+            </div>
+        </div>
+        <div class="auth-form">
+            <div class="form-header">
+                <img src="https://media.istockphoto.com/id/1423550966/vector/profit-rounded-lines-icon.jpg?s=612x612&w=0&k=20&c=_KFEK2PUIlquKGVUYQ18I2rO6xQ3ieFDEx-xHpXRLTI=" alt="FinSage Logo">
+                <h2>Create Account</h2>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-list">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="error-list">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="input-group">
+                    <div class="input-icon-wrapper">
+                        <input type="text" name="username" class="form-input" placeholder="Username" 
+                               value="{{ form.username.value|default:'' }}" required>
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="error-list">
+                            {% for error in form.username.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="input-group">
+                    <div class="input-icon-wrapper">
+                        <input type="email" name="email" class="form-input" placeholder="Email Address"
+                               value="{{ form.email.value|default:'' }}" required>
+                        <i class="fas fa-envelope input-icon"></i>
+                    </div>
+                    {% if form.email.errors %}
+                        <div class="error-list">
+                            {% for error in form.email.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="input-group">
+                    <div class="input-icon-wrapper">
+                        <input type="password" id="password1" name="password1" class="form-input" 
+                               placeholder="Password" required>
+                        <i class="fas fa-lock input-icon"></i>
+                    </div>
+                    {% if form.password1.errors %}
+                        <div class="error-list">
+                            {% for error in form.password1.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="input-group">
+                    <div class="input-icon-wrapper">
+                        <input type="password" id="password2" name="password2" class="form-input" 
+                               placeholder="Confirm Password" required>
+                        <i class="fas fa-lock input-icon"></i>
+                    </div>
+                    {% if form.password2.errors %}
+                        <div class="error-list">
+                            {% for error in form.password2.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="toggle-password">
+                        <input type="checkbox" id="show-password" onclick="togglePasswordVisibility()">
+                        <label for="show-password">Show Passwords</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Sign Up</button>
+
+                <div class="auth-links">
+                    <a href="{% url 'finances:login' %}">Already have an account? Log in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function togglePasswordVisibility() {
+            const password1Field = document.getElementById('password1');
+            const password2Field = document.getElementById('password2');
+            const type = password1Field.type === 'password' ? 'text' : 'password';
+            password1Field.type = type;
+            password2Field.type = type;
+        }
+    </script>
+</body>
+</html>
