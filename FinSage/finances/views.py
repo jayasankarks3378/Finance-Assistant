@@ -1,17 +1,27 @@
-# At the top of views.py with other imports
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.conf import settings
-from .models import Expense
-from .forms import BillUploadForm
+from django.db.models import Sum
+from django.core.paginator import Paginator
+from django.db.models import Sum
+
+from .models import Income, Expense
+from .forms import IncomeForm, ExpenseForm, BillUploadForm
+
+import os
+import csv
 import cv2
 import pytesseract
-import os
-from datetime import datetime
 import json
-from groq import Groq
+import numpy as np
+from datetime import datetime
 from dotenv import load_dotenv
+from groq import Groq
+
+
 
 # Load environment variables
 load_dotenv()
@@ -73,8 +83,18 @@ def upload_bill(request):
 
 def process_bill_image(file_path):
     image = cv2.imread(file_path)
+    # Denoising
+    image = cv2.fastNlMeansDenoisingColored(image, None, 10, 10, 7, 21)
+    # Upscaling (2x) using cubic interpolation
+    height, width = image.shape[:2]
+    image = cv2.resize(image, (width * 2, height * 2), interpolation=cv2.INTER_CUBIC)
+    # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, threshold = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # Sharpening kernel
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    sharpened = cv2.filter2D(gray, -1, kernel)
+    # Binarization using OTSU thresholding
+    _, threshold = cv2.threshold(sharpened, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return threshold
 
 def extract_text(image):
@@ -174,15 +194,7 @@ def export_expenses(request):
 
 # Signup View
 # finances/views.py
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from django.contrib import messages
-from .models import Income, Expense
-from .forms import IncomeForm, ExpenseForm
-import csv
+
 
 def signup(request):
     if request.method == 'POST':
@@ -231,29 +243,93 @@ def logout_view(request):
 def home(request):
     return render(request, 'finances/home.html')
 
+# @login_required
+# def dashboard(request):
+#     incomes = Income.objects.filter(user=request.user)
+#     expenses = Expense.objects.filter(user=request.user)
+#     total_income = incomes.aggregate(Sum('amount'))['amount__sum'] or 0
+#     total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+#     balance = total_income - total_expenses
+#     search_date = request.GET.get('date')
+#     user = request.user
+#     if not user.is_authenticated:
+#         return render(request, 'finances/dashboard.html', {'expenses': []})
+#     expenses = Expense.objects.filter(user=user)
+#     if search_date:
+#         expenses = expenses.filter(date=search_date)
+#     return render(request, 'finances/dashboard.html', {
+#         'incomes': incomes,
+#         'expenses': expenses,
+#         'total_income': total_income,
+#         'total_expenses': total_expenses,
+#         'balance': balance,
+#         'search_date': search_date, 
+#     })
+
+
 @login_required
 def dashboard(request):
-    incomes = Income.objects.filter(user=request.user)
-    expenses = Expense.objects.filter(user=request.user)
-    total_income = incomes.aggregate(Sum('amount'))['amount__sum'] or 0
-    total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+    total_income = Income.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
+    total_expenses = Expense.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
     balance = total_income - total_expenses
-    search_date = request.GET.get('date')
-    user = request.user
-    if not user.is_authenticated:
-        return render(request, 'finances/dashboard.html', {'expenses': []})
-    expenses = Expense.objects.filter(user=user)
-    if search_date:
-        expenses = expenses.filter(date=search_date)
-    return render(request, 'finances/dashboard.html', {
-        'incomes': incomes,
-        'expenses': expenses,
-        'total_income': total_income,
-        'total_expenses': total_expenses,
-        'balance': balance,
-        'search_date': search_date, 
-    })
+    income_years = Income.objects.filter(user=request.user).dates('date', 'year', order='DESC')
+    expense_years = Expense.objects.filter(user=request.user).dates('date', 'year', order='DESC')
 
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+
+    try:
+        month = int(month) if month else None
+        year = int(year) if year else None
+    except ValueError:
+        month = None
+        year = None
+
+    expenses = Expense.objects.filter(user=request.user)
+    
+    if month and year:
+        expenses = expenses.filter(date__month=month, date__year=year)
+    elif month:
+        expenses = expenses.filter(date__month=month)
+    elif year:
+        expenses = expenses.filter(date__year=year)
+
+    # Fix "None" issue in expenses by ensuring month_year is set correctly
+    expense_data = {}
+    for expense in expenses:
+        if expense.date:
+            key = expense.date.strftime("%B %Y")
+        else:
+            key = "Unknown Date"
+
+        if key not in expense_data:
+            expense_data[key] = {'total': 0, 'list': []}
+        expense_data[key]['total'] += expense.amount
+        expense_data[key]['list'].append(expense)
+
+    available_years = sorted(set(
+        y.year for y in Income.objects.filter(user=request.user).dates('date', 'year', order='DESC')
+    ) | set(
+        y.year for y in Expense.objects.filter(user=request.user).dates('date', 'year', order='DESC')
+    ), reverse=True)
+
+    # Pagination: Show 10 expenses per page (example)
+    paginator = Paginator(expenses, 7)  
+    page_number = request.GET.get('page')
+    expenses_page = paginator.get_page(page_number)
+
+    context = {
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "balance": balance,
+        "incomes": Income.objects.filter(user=request.user),
+        "expenses": expenses_page,
+        "expense_list": [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()],
+        "available_months": range(1, 13),   
+        "available_years": available_years,
+    }
+    
+    return render(request, "finances/dashboard.html", context)
 
 # Add Income
 @login_required

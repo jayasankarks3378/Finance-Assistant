@@ -26,7 +26,7 @@ class Expense(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Expense of {self.amount} on {self.date} in {self.category.name} by {self.user}"
+        return f"Expense of {self.amount} on {self.date} by {self.user}"
 
     class Meta:
         verbose_name = "Expense"
