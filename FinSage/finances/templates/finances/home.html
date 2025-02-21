@@ -241,6 +241,23 @@
                 padding: 0.4rem 1rem;
             }
         }
+        .message {
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 5px;
+                position: relative;
+                background: #d4edda; /* Example success background */
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+            
+            .message-close {
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                cursor: pointer;
+                font-size: 18px;
+            }
     </style>
 </head>
 <body>
@@ -258,13 +275,26 @@
         </div>
     </nav>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="messages {{ message.tags }}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
+    <div id="message-container" class="message-container">
+        {% if messages %}
+            {% for message in messages %}
+                {% if forloop.last %}
+                    <div class="message {{ message.tags }} animate__animated animate__fadeIn">
+                        <span class="message-close" onclick="closeMessage(this)">&times;</span>
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    <script>
+        function closeMessage(closeBtn) {
+            let messageDiv = closeBtn.parentElement;
+            messageDiv.classList.add("animate__fadeOut"); // Add fade-out animation
+            setTimeout(() => messageDiv.style.display = "none", 100); // Hide after animation
+        }
+    </script>
 
     <section class="hero">
         <div class="hero-content">
