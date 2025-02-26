@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,245 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | FinSage</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --primary-color: #0f766e;
-            --primary-dark: #134e4a;
-            --secondary-color: #0d9488;
-            --accent-color: #2dd4bf;
-            --text-color: #1e293b;
-            --light-bg: #f8fafc;
-            --error-color: #dc2626;
-            --white: #ffffff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(-45deg, #134e4a, #0f766e, #14b8a6, #5eead4);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .auth-container {
-            background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            transform: translateY(0);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .auth-container:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .auth-image {
-            flex: 1;
-            position: relative;
-            display: none;
-            background: linear-gradient(
-                135deg,
-                rgba(15, 118, 110, 0.9),
-                rgba(19, 78, 74, 0.85)
-            ),
-            url('https://media.istockphoto.com/id/1423550966/vector/profit-rounded-lines-icon.jpg?s=612x612&w=0&k=20&c=_KFEK2PUIlquKGVUYQ18I2rO6xQ3ieFDEx-xHpXRLTI=') center/cover;
-        }
-
-        @media (min-width: 768px) {
-            .auth-image {
-                display: block;
-            }
-        }
-
-        .auth-image-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 30px;
-            color: var(--white);
-            text-align: center;
-            background: rgba(15, 118, 110, 0.1);
-            backdrop-filter: blur(8px);
-        }
-
-        .auth-image-logo {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .auth-image-logo i {
-            color: var(--accent-color);
-        }
-
-        .auth-form {
-            flex: 1;
-            padding: 40px;
-            background: var(--light-bg);
-        }
-
-        .form-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-header img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin-bottom: 15px;
-            box-shadow: 0 6px 20px rgba(15, 118, 110, 0.2);
-            padding: 6px;
-            background: var(--white);
-        }
-
-        .form-header h2 {
-            color: var(--text-color);
-            font-size: 1.75rem;
-            margin: 10px 0;
-            font-weight: 600;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .input-icon-wrapper {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--primary-color);
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 14px 40px;
-            font-size: 0.95rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: var(--white);
-            color: var(--text-color);
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
-        }
-
-        .toggle-password {
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-color);
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: var(--white);
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 25px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(15, 118, 110, 0.3);
-        }
-
-        .auth-links {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .auth-links a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .auth-links a:hover {
-            color: var(--primary-dark);
-        }
-
-        .error-list {
-            color: var(--error-color);
-            background-color: rgba(220, 38, 38, 0.1);
-            border: 1px solid var(--error-color);
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-image">
             <div class="auth-image-overlay">
                 <div class="auth-image-logo">
-                    <i class="fas fa-chart-line"></i>
+                    <img src="data:image/png;base64,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" alt="FinSage Logo" style="height: 50px; margin-right: 10px;">
                     <span>FinSage</span>
                 </div>
                 <h2>Welcome Back!</h2>
                 <p>Take control of your financial future with FinSage's powerful tracking and analytics tools.</p>
+                
+                <div class="features-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div>Budget Tracking & Analysis</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div>Financial Goal Setting</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div>Smart Alerts & Notifications</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="auth-form">
@@ -298,6 +93,12 @@
                     </div>
                 </div>
 
+                <div class="custom-checkbox">
+                    <input type="checkbox" id="remember-me" name="remember-me">
+                    <span class="checkmark"></span>
+                    <label for="remember-me">Remember me</label>
+                </div>
+
                 <button type="submit" class="submit-btn">Log In</button>
 
                 <div class="auth-links">
@@ -313,6 +114,21 @@
             const passwordField = document.getElementById('password');
             passwordField.type = passwordField.type === 'password' ? 'text' : 'password';
         }
+
+        // Add animation to buttons
+        document.querySelectorAll('.submit-btn, .social-btn').forEach(button => {
+            button.addEventListener('mousedown', function() {
+                this.style.transform = 'scale(0.95)';
+            });
+            
+            button.addEventListener('mouseup', function() {
+                this.style.transform = '';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
     </script>
 </body>
 </html>

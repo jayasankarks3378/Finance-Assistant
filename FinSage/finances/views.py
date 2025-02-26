@@ -11,12 +11,7 @@ from django.db.models import Sum
 from .models import Income, Expense
 from .forms import IncomeForm, ExpenseForm, BillUploadForm
 
-import os
-import csv
-import cv2
-import pytesseract
-import json
-import numpy as np
+import os,csv,cv2,pytesseract,json,numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 from groq import Groq
@@ -265,7 +260,9 @@ def home(request):
 #         'balance': balance,
 #         'search_date': search_date, 
 #     })
-
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from django.db.models.functions import TruncMonth
 
 @login_required
 def dashboard(request):
@@ -318,6 +315,53 @@ def dashboard(request):
     page_number = request.GET.get('page')
     expenses_page = paginator.get_page(page_number)
 
+    # Get data for chart - last 12 months
+    current_date = datetime.now()
+    
+    # Prepare chart data
+    chart_data = {}
+    
+    # Get last 12 months
+    for i in range(11, -1, -1):
+        month_date = current_date - relativedelta(months=i)
+        month_name = month_date.strftime("%b %Y")
+        chart_data[month_name] = {'income': 0, 'expense': 0}
+    
+    # Calculate income for each month
+    monthly_incomes = Income.objects.filter(
+        user=request.user,
+        date__gte=current_date - relativedelta(months=12)
+    ).annotate(
+        month=TruncMonth('date')
+    ).values('month').annotate(
+        total=Sum('amount')
+    ).order_by('month')
+    
+    for income in monthly_incomes:
+        month_name = income['month'].strftime("%b %Y")
+        if month_name in chart_data:
+            chart_data[month_name]['income'] = float(income['total'])
+    
+    # Calculate expenses for each month
+    monthly_expenses = Expense.objects.filter(
+        user=request.user,
+        date__gte=current_date - relativedelta(months=12)
+    ).annotate(
+        month=TruncMonth('date')
+    ).values('month').annotate(
+        total=Sum('amount')
+    ).order_by('month')
+    
+    for expense in monthly_expenses:
+        month_name = expense['month'].strftime("%b %Y")
+        if month_name in chart_data:
+            chart_data[month_name]['expense'] = float(expense['total'])
+    
+    # Convert to lists for the chart
+    chart_labels = list(chart_data.keys())
+    chart_income = [chart_data[month]['income'] for month in chart_labels]
+    chart_expenses = [chart_data[month]['expense'] for month in chart_labels]
+
     context = {
         "total_income": total_income,
         "total_expenses": total_expenses,
@@ -327,6 +371,9 @@ def dashboard(request):
         "expense_list": [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()],
         "available_months": range(1, 13),   
         "available_years": available_years,
+        "chart_labels": chart_labels,
+        "chart_income": chart_income,
+        "chart_expenses": chart_expenses,
     }
     
     return render(request, "finances/dashboard.html", context)

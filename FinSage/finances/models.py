@@ -31,7 +31,7 @@ class Expense(models.Model):
     class Meta:
         verbose_name = "Expense"
         verbose_name_plural = "Expenses"
-        ordering = ['-date']
+        ordering = ['-date'] 
         indexes = [
             models.Index(fields=['user']),
             models.Index(fields=['date']),
