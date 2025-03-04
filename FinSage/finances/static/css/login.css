@@ -1,18 +1,15 @@
         /* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap'); */
         
         :root {
-            --primary-color: #15803d;    /* Green-700 */
-            --primary-dark: #166534;     /* Green-800 */
-            --secondary-color: #22c55e;  /* Green-500 */
-            --accent-color: #4ade80;     /* Green-400 */
-            --text-color: #1e293b;       /* Slate-800 */
-            --light-bg: #f0fdf4;         /* Green-50 */
-            --error-color: #dc2626;      /* Red-600 */
+            --primary-color: #0f766e;
+            --primary-dark: #134e4a;
+            --secondary-color: #0d9488;
+            --accent-color: #2dd4bf;
+            --text-color: #1e293b;
+            --light-bg: #f8fafc;
+            --error-color: #dc2626;
             --white: #ffffff;
-            --success-color: #16a34a;    /* Green-600 */
-            --warning-color: #eab308;    /* Yellow-500 */
         }
-
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +18,7 @@
         }
 
         body {
-            background: linear-gradient(-45deg, #dcfce7, #bbf7d0, #86efac, #4ade80);
+            background: linear-gradient(-45deg, #1b6c67, #15a498, #14b8a6, #5eead4);
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
             min-height: 100vh;
@@ -50,6 +47,7 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
+
         .auth-container:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
@@ -61,8 +59,8 @@
             display: none;
             background: linear-gradient(
                 135deg,
-                rgba(21, 128, 61, 0.9),    /* Updated to match primary-color */
-                rgba(22, 101, 52, 0.85)     /* Updated to match primary-dark */
+                rgba(15, 118, 110, 0.9),
+                rgba(19, 78, 74, 0.85)
             ),
             url('https://media.istockphoto.com/id/1423550966/vector/profit-rounded-lines-icon.jpg?s=612x612&w=0&k=20&c=_KFEK2PUIlquKGVUYQ18I2rO6xQ3ieFDEx-xHpXRLTI=') center/cover;
         }

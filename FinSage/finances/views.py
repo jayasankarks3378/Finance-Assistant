@@ -274,6 +274,7 @@ def dashboard(request):
 
     month = request.GET.get('month')
     year = request.GET.get('year')
+    date = request.GET.get('date')
 
     try:
         month = int(month) if month else None
@@ -290,6 +291,8 @@ def dashboard(request):
         expenses = expenses.filter(date__month=month)
     elif year:
         expenses = expenses.filter(date__year=year)
+    if date:
+        expenses = expenses.filter(date=date)
 
     # Fix "None" issue in expenses by ensuring month_year is set correctly
     expense_data = {}
@@ -310,7 +313,7 @@ def dashboard(request):
         y.year for y in Expense.objects.filter(user=request.user).dates('date', 'year', order='DESC')
     ), reverse=True)
 
-    # Pagination: Show 10 expenses per page (example)
+    # Pagination: Show 7 expenses per page (example)
     paginator = Paginator(expenses, 7)  
     page_number = request.GET.get('page')
     expenses_page = paginator.get_page(page_number)

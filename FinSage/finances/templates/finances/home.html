@@ -28,7 +28,7 @@
         {% if messages %}
             {% for message in messages %}
                 {% if forloop.last %}
-                    <div class="message {{ message.tags }} animate__animated animate__fadeIn">
+                    <div class="message {{ message.tags }} animate_animated animate_fadeIn">
                         {{ message }}
                         <span class="message-close" onclick="closeMessage(this)">&times;</span>
                     </div>

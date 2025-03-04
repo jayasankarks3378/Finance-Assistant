@@ -9,7 +9,62 @@
     --light-bg: #f8fafc;
     --white: #ffffff;
 }
+.fab-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
 
+.fab-button {
+    background-color: var(--primary-color);
+    color: white;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.fab-button:hover {
+    background-color: var(--primary-dark);
+}
+
+.fab-options {
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+.fab-options.active {
+    display: flex;
+}
+
+.fab-option {
+    background-color: white;
+    color: var(--text-color);
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.fab-option:hover {
+    background-color: var(--light-bg);
+}
+
+.fab-option i {
+    margin-right: 10px;
+}
 * {
     margin: 0;
     padding: 0;
