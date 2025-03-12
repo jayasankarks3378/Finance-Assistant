@@ -6,6 +6,7 @@ class Income(models.Model):
     description = models.CharField(max_length=255)
     date = models.DateField()
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    category = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"Income of {self.amount} on {self.date} by {self.user}"
@@ -24,6 +25,7 @@ class Expense(models.Model):
     description = models.CharField(max_length=255)
     date = models.DateField()
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    category = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"Expense of {self.amount} on {self.date} by {self.user}"

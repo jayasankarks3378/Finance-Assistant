@@ -87,11 +87,10 @@
         <!-- Charts Row -->
         <div class="row mb-4 animate__animated animate__fadeIn">
             <div class="col-md-6">
-                <!-- <div class="chart-container">
-                    <h5>Monthly Expenses by Category</h5>
+                <div class="chart-container">
+                    <h5>Income and Expenses by Category</h5>
                     <canvas id="categoryChart" width="400" height="250"></canvas>
-                    <div class="category-legend" id="categoryLegend"></div>
-                </div> -->
+                </div>
             </div>
             <div class="col-md-6">
                 <div class="chart-container">
@@ -110,6 +109,7 @@
                             <th>Amount</th>
                             <th>Description</th>
                             <th>Date</th>
+                            <th>Category</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -120,6 +120,7 @@
                                     <td>₹{{ income.amount }}</td>
                                     <td>{{ income.description }}</td>
                                     <td>{{ income.date }}</td>
+                                    <td>{{ income.category }}</td>
                                     <td>
                                         <a href="{% url 'finances:edit_income' income.id %}" class="btn btn-warning btn-custom">
                                             <i class="fas fa-edit me-1"></i> Edit
@@ -217,7 +218,7 @@
                                     <td>{{ expense.date|date:"d M Y" }}</td>
                                     <td>₹{{ expense.amount }}</td>
                                     <td>{{ expense.description }}</td>
-                                    <td>{{ expense.category.name }}</td>
+                                    <td>{{ expense.category }}</td>
                                     <td>
                                         <a href="{% url 'finances:edit_expense' expense.id %}" class="btn btn-warning btn-custom">
                                             <i class="fas fa-edit me-1"></i> Edit
@@ -288,107 +289,184 @@
         </div>
     </div> -->
 
-{{ chart_labels|json_script:"chart-labels" }}
-{{ chart_income|json_script:"chart-income" }}
-{{ chart_expenses|json_script:"chart-expenses" }}
-
+    {{ chart_labels|json_script:"chart-labels" }}
+    {{ chart_income|json_script:"chart-income" }}
+    {{ chart_expenses|json_script:"chart-expenses" }}
+    {{ categories|json_script:"chart-categories" }}
+    {{ income_data|json_script:"chart-income-data" }}
+    {{ expense_data|json_script:"chart-expense-data" }}    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2021 FinSage. All Rights Reserved.</p>
+        </div>
+    </footer>
 <script>
-function closeMessage(closeBtn) {
-    let messageDiv = closeBtn.parentElement;
-    messageDiv.classList.add("animate__fadeOut"); 
-    setTimeout(() => messageDiv.style.display = "none", 100);
-}
+    function closeMessage(closeBtn) {
+        let messageDiv = closeBtn.parentElement;
+        messageDiv.classList.add("animate__fadeOut"); 
+        setTimeout(() => messageDiv.style.display = "none", 100);
+    }
 
-function confirmDelete(type) {
-    return confirm(`Are you sure you want to delete this ${type}?`);
-}
+    function confirmDelete(type) {
+        return confirm(`Are you sure you want to delete this ${type}?`);
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Trend Chart
-    var ctx = document.getElementById('trendChart').getContext('2d');
-    
-    var chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
-    var chartIncome = JSON.parse(document.getElementById('chart-income').textContent);
-    var chartExpenses = JSON.parse(document.getElementById('chart-expenses').textContent);
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartLabels,
-            datasets: [
-                {
-                    label: 'Income',
-                    data: chartIncome,
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.1,
-                    fill: true
-                },
-                {
-                    label: 'Expenses',
-                    data: chartExpenses,
-                    borderColor: '#dc3545',
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.1,
-                    fill: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Amount'
+    document.addEventListener('DOMContentLoaded', function() {
+        // Trend Chart
+        var ctx = document.getElementById('trendChart').getContext('2d');
+        
+        var chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
+        var chartIncome = JSON.parse(document.getElementById('chart-income').textContent);
+        var chartExpenses = JSON.parse(document.getElementById('chart-expenses').textContent);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: chartIncome,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Expenses',
+                        data: chartExpenses,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
                     }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Month'
-                    }
-                }
+                ]
             },
-            plugins: {
-                legend: {
-                    position: 'top',
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    }
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            var label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-IN', { 
+                                        style: 'currency', 
+                                        currency: 'INR',
+                                        maximumFractionDigits: 0
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
                             }
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('en-IN', { 
-                                    style: 'currency', 
-                                    currency: 'INR',
-                                    maximumFractionDigits: 0
-                                }).format(context.parsed.y);
-                            }
-                            return label;
                         }
                     }
                 }
             }
+        });
+
+        // Category Chart
+        var ctxCategory = document.getElementById('categoryChart').getContext('2d');
+        
+        var categories = JSON.parse(document.getElementById('chart-categories').textContent);
+        var incomeData = JSON.parse(document.getElementById('chart-income-data').textContent);
+        var expenseData = JSON.parse(document.getElementById('chart-expense-data').textContent);
+        new Chart(ctxCategory, {
+            type: 'bar',
+            data: {
+                labels: categories,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.5)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expenseData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Category'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-IN', { 
+                                        style: 'currency', 
+                                        currency: 'INR',
+                                        maximumFractionDigits: 0
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // FAB Button functionality
+        const fabButton = document.getElementById('fabButton');
+        const fabOptions = document.getElementById('fabOptions');
+        
+        if (fabButton) {
+            fabButton.addEventListener('click', function() {
+                fabOptions.classList.toggle('active');
+            });
         }
     });
-    
-    // FAB Button functionality
-    const fabButton = document.getElementById('fabButton');
-    const fabOptions = document.getElementById('fabOptions');
-    
-    if (fabButton) {
-        fabButton.addEventListener('click', function() {
-            fabOptions.classList.toggle('active');
-        });
-    }
-});
-</script>
+    </script>
 </body>
 </html>

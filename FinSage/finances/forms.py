@@ -7,7 +7,7 @@ from django.forms import ModelForm
 class IncomeForm(ModelForm):
     class Meta:
         model = Income
-        fields = ['amount', 'description', 'date']
+        fields = ['amount', 'description', 'date', 'category']
 
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),  # This makes the date field a date picker
@@ -16,7 +16,7 @@ class IncomeForm(ModelForm):
 class ExpenseForm(ModelForm):
     class Meta:
         model = Expense
-        fields = ['amount', 'description', 'date']
+        fields = ['amount', 'description', 'date','category']
 
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),  # This makes the date field a date picker

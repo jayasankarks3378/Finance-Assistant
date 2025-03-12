@@ -238,31 +238,15 @@ def logout_view(request):
 def home(request):
     return render(request, 'finances/home.html')
 
-# @login_required
-# def dashboard(request):
-#     incomes = Income.objects.filter(user=request.user)
-#     expenses = Expense.objects.filter(user=request.user)
-#     total_income = incomes.aggregate(Sum('amount'))['amount__sum'] or 0
-#     total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
-#     balance = total_income - total_expenses
-#     search_date = request.GET.get('date')
-#     user = request.user
-#     if not user.is_authenticated:
-#         return render(request, 'finances/dashboard.html', {'expenses': []})
-#     expenses = Expense.objects.filter(user=user)
-#     if search_date:
-#         expenses = expenses.filter(date=search_date)
-#     return render(request, 'finances/dashboard.html', {
-#         'incomes': incomes,
-#         'expenses': expenses,
-#         'total_income': total_income,
-#         'total_expenses': total_expenses,
-#         'balance': balance,
-#         'search_date': search_date, 
-#     })
+# Dashboard View
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.core.paginator import Paginator
+from django.db.models.functions import TruncMonth
+from .models import Income, Expense
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from django.db.models.functions import TruncMonth
 
 @login_required
 def dashboard(request):
@@ -306,6 +290,10 @@ def dashboard(request):
             expense_data[key] = {'total': 0, 'list': []}
         expense_data[key]['total'] += expense.amount
         expense_data[key]['list'].append(expense)
+        
+    expense_list = []
+    if isinstance(expense_data, dict):
+        expense_list = [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()]
 
     available_years = sorted(set(
         y.year for y in Income.objects.filter(user=request.user).dates('date', 'year', order='DESC')
@@ -365,18 +353,31 @@ def dashboard(request):
     chart_income = [chart_data[month]['income'] for month in chart_labels]
     chart_expenses = [chart_data[month]['expense'] for month in chart_labels]
 
+    # Aggregate income and expenses by category
+    income_by_category = Income.objects.filter(user=request.user).values('category').annotate(total_amount=Sum('amount'))
+    expense_by_category = Expense.objects.filter(user=request.user).values('category').annotate(total_amount=Sum('amount'))
+
+    # Prepare data for the chart
+    categories = list(set([item['category'] for item in income_by_category] + [item['category'] for item in expense_by_category]))
+    income_data = [next((item['total_amount'] for item in income_by_category if item['category'] == category), 0) for category in categories]
+    expense_data = [next((item['total_amount'] for item in expense_by_category if item['category'] == category), 0) for category in categories]
+
     context = {
         "total_income": total_income,
         "total_expenses": total_expenses,
         "balance": balance,
         "incomes": Income.objects.filter(user=request.user),
         "expenses": expenses_page,
-        "expense_list": [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()],
+        # "expense_list": [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()],
         "available_months": range(1, 13),   
         "available_years": available_years,
         "chart_labels": chart_labels,
         "chart_income": chart_income,
         "chart_expenses": chart_expenses,
+        'categories': categories,
+        'income_data': income_data,
+        'expense_data': expense_data,
+        "expense_list": expense_list,
     }
     
     return render(request, "finances/dashboard.html", context)
