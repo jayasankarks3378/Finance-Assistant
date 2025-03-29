@@ -169,465 +169,8 @@
     }
   };
 
-  const ChartManager = {
-    charts: {
-      category: null,
-      trend: null
-    },
-    init() {
-      if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded');
-        return;
-      }
-      
-      this.initCategoryChart();
-      this.setupListeners();
-    },
-    
-    initCategoryChart() {
-      if (!DOM.categoryChart) return;
-      
-      const ctx = DOM.categoryChart.getContext('2d');
-      
-      const categories = ['Housing', 'Food', 'Transport', 'Entertainment', 'Utilities', 'Others'];
-      const values = [20000, 15000, 8000, 5000, 4000, 3000];
-      const backgroundColors = [
-        'rgba(255, 99, 132, 0.7)',
-        'rgba(54, 162, 235, 0.7)',
-        'rgba(255, 206, 86, 0.7)',
-        'rgba(75, 192, 192, 0.7)',
-        'rgba(153, 102, 255, 0.7)',
-        'rgba(255, 159, 64, 0.7)'
-      ];
-      const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
-      
-      Chart.defaults.font.size = window.innerWidth < 768 ? 12 : 14;
-      
-      this.charts.category = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: categories,
-          datasets: [{
-            label: 'Expenses by Category',
-            data: values,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: context => '₹' + context.raw.toLocaleString()
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: value => '₹' + value.toLocaleString()
-              }
-            }
-          },
-          animation: {
-            duration: 1500,
-            easing: 'easeOutQuart'
-          }
-        }
-      });
-    },
-    
-    initTrendChart() {
-      try {
-        var ctx = document.getElementById('trendChart').getContext('2d');
-        
-        var chartLabels = JSON.parse(document.getElementById('chart-labels')?.textContent || '[]');
-        var chartIncome = JSON.parse(document.getElementById('chart-income')?.textContent || '[]');
-        var chartExpenses = JSON.parse(document.getElementById('chart-expenses')?.textContent || '[]');
-        
-        this.charts.trend = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: chartLabels,
-            datasets: [
-              {
-                label: 'Income',
-                data: chartIncome,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                borderWidth: 2,
-                tension: 0.1,
-                fill: true
-              },
-              {
-                label: 'Expenses',
-                data: chartExpenses,
-                borderColor: '#dc3545',
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                borderWidth: 2,
-                tension: 0.1,
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Amount'
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Month'
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                position: 'top',
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    var label = context.dataset.label || '';
-                    if (label) {
-                      label += ': ';
-                    }
-                    if (context.parsed.y !== null) {
-                      label += new Intl.NumberFormat('en-IN', { 
-                        style: 'currency', 
-                        currency: 'INR',
-                        maximumFractionDigits: 0
-                      }).format(context.parsed.y);
-                    }
-                    return label;
-                  }
-                }
-              }
-            },
-            animation: {
-              duration: 1000
-            }
-          }
-        });
-      } catch (error) {
-        console.error('Error initializing trend chart:', error);
-      }
-    },
-    
-    updateCategoryChart(newData) {
-      if (!this.charts.category) return;
-      
-      this.charts.category.data.datasets[0].data = newData;
-      this.charts.category.update();
-    },
-    
-    setupListeners() {
-      let resizeTimeout;
-      window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          Chart.defaults.font.size = window.innerWidth < 768 ? 12 : 14;
-          
-          if (this.charts.category) {
-            this.charts.category.resize();
-          }
-          
-          if (this.charts.trend) {
-            this.charts.trend.resize();
-          }
-        }, 250);
-      });
-    }
-  };
+  
 
-  const TransactionManager = {
-    transactions: [],
-    init() {
-      this.registerEventListeners();
-      this.loadTransactions();
-    },
-    
-    registerEventListeners() {
-      if (DOM.transactionForm) {
-        DOM.transactionForm.addEventListener('submit', this.handleTransactionSubmit.bind(this));
-      }
-      
-      if (DOM.transactionList) {
-        DOM.transactionList.addEventListener('click', this.handleTransactionClick.bind(this));
-      }
-    },
-    
-    handleTransactionSubmit(e) {
-      e.preventDefault();
-      
-      try {
-        const form = e.target;
-        const formData = new FormData(form);
-        
-        const transactionData = {
-          id: Date.now(),
-          type: formData.get('transaction-type'),
-          category: formData.get('transaction-category'),
-          amount: parseFloat(formData.get('transaction-amount')),
-          description: formData.get('transaction-description'),
-          date: formData.get('transaction-date')
-        };
-        
-        if (!transactionData.type || !transactionData.category || 
-            isNaN(transactionData.amount) || !transactionData.date) {
-          NotificationManager.showNotification('Please fill all required fields', 'warning');
-          return;
-        }
-        
-        this.addTransaction(transactionData);
-        
-        const modalElement = DOM.transactionModal;
-        if (modalElement) {
-          const modalInstance = bootstrap.Modal.getInstance(modalElement);
-          if (modalInstance) {
-            modalInstance.hide();
-          }
-        }
-        
-        NotificationManager.showNotification('Transaction added successfully!', 'success');
-        
-        form.reset();
-      } catch (error) {
-        console.error('Error submitting transaction:', error);
-        NotificationManager.showNotification('Failed to add transaction', 'error');
-      }
-    },
-    
-    handleTransactionClick(e) {
-      const editBtn = e.target.closest('.edit-transaction');
-      const deleteBtn = e.target.closest('.delete-transaction');
-      
-      if (editBtn) {
-        const transactionId = editBtn.dataset.id;
-        this.editTransaction(transactionId);
-      } else if (deleteBtn) {
-        const transactionId = deleteBtn.dataset.id;
-        if (confirm('Are you sure you want to delete this transaction?')) {
-          this.deleteTransaction(transactionId);
-        }
-      }
-    },
-    
-    loadTransactions() {
-      try {
-        const savedTransactions = localStorage.getItem('financial-dashboard-transactions');
-        if (savedTransactions) {
-          this.transactions = JSON.parse(savedTransactions);
-        } else {
-          this.transactions = this.getSampleTransactions();
-          this.saveTransactions();
-        }
-        
-        this.renderTransactions();
-      } catch (error) {
-        console.error('Error loading transactions:', error);
-        this.transactions = this.getSampleTransactions();
-        this.renderTransactions();
-      }
-    },
-    
-    saveTransactions() {
-      try {
-        localStorage.setItem('financial-dashboard-transactions', JSON.stringify(this.transactions));
-      } catch (error) {
-        console.error('Error saving transactions:', error);
-      }
-    },
-    
-    addTransaction(transaction) {
-      this.transactions.unshift(transaction);
-      this.saveTransactions();
-      this.renderTransactions();
-      DashboardManager.updateDashboardSummary();
-    },
-    
-    editTransaction(id) {
-      const transaction = this.transactions.find(t => t.id.toString() === id.toString());
-      if (!transaction) return;
-      
-      if (DOM.transactionForm) {
-        const form = DOM.transactionForm;
-        form.elements['transaction-type'].value = transaction.type;
-        form.elements['transaction-category'].value = transaction.category;
-        form.elements['transaction-amount'].value = transaction.amount;
-        form.elements['transaction-description'].value = transaction.description;
-        form.elements['transaction-date'].value = transaction.date;
-        
-        form.dataset.editMode = 'true';
-        form.dataset.editId = id;
-        
-        if (DOM.transactionModal) {
-          const modalInstance = new bootstrap.Modal(DOM.transactionModal);
-          modalInstance.show();
-        }
-      }
-    },
-    
-    deleteTransaction(id) {
-      const index = this.transactions.findIndex(t => t.id.toString() === id.toString());
-      if (index === -1) return;
-      
-      this.transactions.splice(index, 1);
-      this.saveTransactions();
-      this.renderTransactions();
-      DashboardManager.updateDashboardSummary();
-      
-      NotificationManager.showNotification('Transaction deleted successfully', 'success');
-    },
-    
-    renderTransactions(filterCategory = 'all') {
-      if (!DOM.transactionList) return;
-      
-      DOM.transactionList.innerHTML = '';
-      
-      const filteredTransactions = filterCategory === 'all' ? 
-        this.transactions : 
-        this.transactions.filter(t => t.category === filterCategory);
-      
-      if (filteredTransactions.length === 0) {
-        DOM.transactionList.innerHTML = `
-          <div class="text-center py-4">
-            <div class="text-muted mb-2">No transactions found</div>
-            <button class="btn btn-sm btn-primary" id="add-first-transaction">
-              <i class="fas fa-plus-circle me-1"></i> Add your first transaction
-            </button>
-          </div>
-        `;
-        
-        const addBtn = document.getElementById('add-first-transaction');
-        if (addBtn) {
-          addBtn.addEventListener('click', () => {
-            if (DOM.transactionModal) {
-              const modalInstance = new bootstrap.Modal(DOM.transactionModal);
-              modalInstance.show();
-            }
-          });
-        }
-        
-        return;
-      }
-      
-      const fragment = document.createDocumentFragment();
-      
-      filteredTransactions.forEach(transaction => {
-        const listItem = this.createTransactionItem(transaction);
-        fragment.appendChild(listItem);
-      });
-      
-      DOM.transactionList.appendChild(fragment);
-    },
-    
-    createTransactionItem(transaction) {
-      const listItem = document.createElement('div');
-      listItem.className = 'transaction-item p-3 border-bottom animate__animated animate__fadeIn';
-      listItem.dataset.id = transaction.id;
-      
-      const amountClass = transaction.type === 'income' ? 'text-success' : 'text-danger';
-      const amountPrefix = transaction.type === 'income' ? '+' : '-';
-      const formattedDate = this.formatDate(transaction.date);
-      const categoryBadge = this.getCategoryBadge(transaction.category);
-      
-      listItem.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h6 class="mb-1">${transaction.description}</h6>
-            <div class="d-flex align-items-center">
-              <small class="text-muted me-2">${formattedDate}</small>
-              ${categoryBadge}
-            </div>
-          </div>
-          <div class="d-flex align-items-center">
-            <div class="fw-bold ${amountClass} me-3">
-              ${amountPrefix}₹${transaction.amount.toLocaleString()}
-            </div>
-            <div class="btn-group">
-              <button class="btn btn-sm btn-outline-secondary edit-transaction" data-id="${transaction.id}" aria-label="Edit transaction">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger delete-transaction" data-id="${transaction.id}" aria-label="Delete transaction">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      return listItem;
-    },
-    
-    getCategoryBadge(category) {
-      const categories = {
-        'housing': { color: 'primary', icon: 'home' },
-        'food': { color: 'success', icon: 'utensils' },
-        'transport': { color: 'info', icon: 'car' },
-        'entertainment': { color: 'warning', icon: 'film' },
-        'utilities': { color: 'secondary', icon: 'bolt' },
-        'salary': { color: 'success', icon: 'money-bill-wave' },
-        'freelance': { color: 'info', icon: 'laptop' },
-        'investment': { color: 'primary', icon: 'chart-line' }
-      };
-      
-      const categoryInfo = categories[category] || { color: 'dark', icon: 'tag' };
-      
-      return `
-        <span class="badge bg-${categoryInfo.color}-subtle text-${categoryInfo.color} rounded-pill">
-          <i class="fas fa-${categoryInfo.icon} me-1"></i>${this.capitalize(category)}
-        </span>
-      `;
-    },
-    
-    formatDate(dateString) {
-      const options = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    },
-    
-    capitalize(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
-    },
-    
-    getCategoryTotals() {
-      const categories = {};
-      
-      this.transactions.forEach(transaction => {
-        if (transaction.type === 'expense') {
-          if (!categories[transaction.category]) {
-            categories[transaction.category] = 0;
-          }
-          categories[transaction.category] += transaction.amount;
-        }
-      });
-      
-      return categories;
-    },
-    
-    getTotalIncome() {
-      return this.transactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-    },
-    
-    getTotalExpense() {
-      return this.transactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-    }
-  };
 
   const FilterManager = {
     activeFilters: {
@@ -799,3 +342,313 @@
     }
   });
 })();
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Trend Chart
+  var ctx = document.getElementById('trendChart').getContext('2d');
+  
+  var chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
+  var chartIncome = JSON.parse(document.getElementById('chart-income').textContent);
+  var chartExpenses = JSON.parse(document.getElementById('chart-expenses').textContent);
+  
+  new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: chartLabels,
+          datasets: [
+              {
+                  label: 'Income',
+                  data: chartIncome,
+                  borderColor: '#28a745',
+                  backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                  borderWidth: 2,
+                  tension: 0.1,
+                  fill: true
+              },
+              {
+                  label: 'Expenses',
+                  data: chartExpenses,
+                  borderColor: '#dc3545',
+                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                  borderWidth: 2,
+                  tension: 0.1,
+                  fill: true
+              }
+          ]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Amount'
+                  }
+              },
+              x: {
+                  title: {
+                      display: true,
+                      text: 'Month'
+                  }
+              }
+          },
+          plugins: {
+              legend: {
+                  position: 'top',
+              },
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          var label = context.dataset.label || '';
+                          if (label) {
+                              label += ': ';
+                          }
+                          if (context.parsed.y !== null) {
+                              label += new Intl.NumberFormat('en-IN', { 
+                                  style: 'currency', 
+                                  currency: 'INR',
+                                  maximumFractionDigits: 0
+                              }).format(context.parsed.y);
+                          }
+                          return label;
+                      }
+                  }
+              }
+          }
+      }
+  });
+
+
+  // Category Chart - Enhanced Version
+var ctxCategory = document.getElementById('categoryChart').getContext('2d');
+
+var categories = JSON.parse(document.getElementById('chart-categories').textContent);
+var incomeData = JSON.parse(document.getElementById('chart-income-data').textContent);
+var expenseData = JSON.parse(document.getElementById('chart-expense-data').textContent);
+
+// Calculate net values for data labels
+var netValues = incomeData.map((income, index) => income - expenseData[index]);
+
+// Custom gradient backgrounds
+function createGradient(ctx, color1, color2) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, color1);
+  gradient.addColorStop(1, color2);
+  return gradient;
+}
+
+const incomeGradient = createGradient(ctxCategory, 'rgba(40, 167, 69, 0.8)', 'rgba(40, 167, 69, 0.3)');
+const expenseGradient = createGradient(ctxCategory, 'rgba(220, 53, 69, 0.8)', 'rgba(220, 53, 69, 0.3)');
+
+new Chart(ctxCategory, {
+  type: 'bar',
+  data: {
+      labels: categories,
+      datasets: [
+          {
+              label: 'Income',
+              data: incomeData,
+              backgroundColor: incomeGradient,
+              borderColor: '#28a745',
+              borderWidth: 2,
+              borderRadius: 6,
+              hoverBorderWidth: 3,
+              hoverBorderColor: '#1d9438'
+          },
+          {
+              label: 'Expenses',
+              data: expenseData,
+              backgroundColor: expenseGradient,
+              borderColor: '#dc3545',
+              borderWidth: 2,
+              borderRadius: 6,
+              hoverBorderWidth: 3,
+              hoverBorderColor: '#c82333'
+          }
+      ]
+  },
+  options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+          duration: 1000,
+          easing: 'easeOutQuart'
+      },
+      layout: {
+          padding: {
+              top: 10,
+              right: 25,
+              bottom: 10,
+              left: 25
+          }
+      },
+      scales: {
+          y: {
+              beginAtZero: true,
+              grid: {
+                  color: 'rgba(200, 200, 200, 0.2)',
+                  drawBorder: false
+              },
+              ticks: {
+                  callback: function(value) {
+                      return new Intl.NumberFormat('en-IN', { 
+                          style: 'currency', 
+                          currency: 'INR',
+                          maximumFractionDigits: 0
+                      }).format(value);
+                  },
+                  font: {
+                      weight: 'bold'
+                  }
+              },
+              title: {
+                  display: true,
+                  text: 'Amount (₹)',
+                  font: {
+                      size: 14,
+                      weight: 'bold'
+                  },
+                  padding: {top: 10, bottom: 10}
+              }
+          },
+          x: {
+              grid: {
+                  display: false
+              },
+              ticks: {
+                  font: {
+                      weight: 'bold'
+                  }
+              },
+              title: {
+                  display: true,
+                  text: 'Category',
+                  font: {
+                      size: 14,
+                      weight: 'bold'
+                  },
+                  padding: {top: 10, bottom: 10}
+              }
+          }
+      },
+      plugins: {
+          legend: {
+              position: 'top',
+              labels: {
+                  boxWidth: 15,
+                  usePointStyle: true,
+                  pointStyle: 'rectRounded',
+                  padding: 20,
+                  font: {
+                      size: 14,
+                      weight: 'bold'
+                  }
+              }
+          },
+          tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleFont: {
+                  size: 14,
+                  weight: 'bold'
+              },
+              bodyFont: {
+                  size: 14
+              },
+              padding: 12,
+              cornerRadius: 6,
+              callbacks: {
+                  label: function(context) {
+                      var label = context.dataset.label || '';
+                      if (label) {
+                          label += ': ';
+                      }
+                      if (context.parsed.y !== null) {
+                          label += new Intl.NumberFormat('en-IN', { 
+                              style: 'currency', 
+                              currency: 'INR',
+                              maximumFractionDigits: 0
+                          }).format(context.parsed.y);
+                      }
+                      return label;
+                  },
+                  afterBody: function(tooltipItems) {
+                      const idx = tooltipItems[0].dataIndex;
+                      const net = netValues[idx];
+                      const netFormatted = new Intl.NumberFormat('en-IN', { 
+                          style: 'currency', 
+                          currency: 'INR',
+                          maximumFractionDigits: 0
+                      }).format(net);
+                      
+                      return `Net: ${netFormatted} (${net >= 0 ? '+' : ''}${(net / expenseData[idx] * 100).toFixed(1)}%)`;
+                  }
+              }
+          },
+          datalabels: {
+              display: function(context) {
+                  return context.dataset.data[context.dataIndex] > 0;
+              },
+              color: function(context) {
+                  return context.dataset.borderColor;
+              },
+              font: {
+                  weight: 'bold'
+              },
+              formatter: function(value) {
+                  if (value > 10000) {
+                      return new Intl.NumberFormat('en-IN', { 
+                          style: 'currency', 
+                          currency: 'INR',
+                          notation: 'compact',
+                          compactDisplay: 'short',
+                          maximumFractionDigits: 1
+                      }).format(value);
+                  }
+                  return '';
+              }
+          }
+      }
+  },
+  plugins: [ChartDataLabels] // Make sure to include this library in your HTML
+});
+
+// FAB Button functionality - Enhanced
+const fabButton = document.getElementById('fabButton');
+const fabOptions = document.getElementById('fabOptions');
+
+if (fabButton) {
+  fabButton.addEventListener('click', function() {
+      fabOptions.classList.toggle('active');
+  });
+  
+  // Auto-hide FAB options when clicking elsewhere
+  document.addEventListener('click', function(event) {
+      if (!fabButton.contains(event.target) && !fabOptions.contains(event.target)) {
+          fabOptions.classList.remove('active');
+      }
+  });
+}
+
+// Add download functionality
+document.getElementById('downloadChart').addEventListener('click', function() {
+  const canvas = document.getElementById('categoryChart');
+  const image = canvas.toDataURL('image/png', 1.0);
+  const link = document.createElement('a');
+  link.download = 'category-financial-chart.png';
+  link.href = image;
+  link.click();
+});
+
+// Add chart animation refresh button
+document.getElementById('refreshChart').addEventListener('click', function() {
+  const chart = Chart.getChart('categoryChart');
+  chart.update('none');
+  chart.options.animation.duration = 1000;
+  chart.reset();
+  setTimeout(() => {
+      chart.update();
+  }, 100);
+});
+});
