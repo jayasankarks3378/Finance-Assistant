@@ -29,3 +29,20 @@ class BillUploadForm(forms.ModelForm):
         widgets = {
             'file': forms.FileInput(attrs={'accept': 'image/*'}) 
         }
+
+class FinancialAnalysisForm(forms.Form):
+    PERIOD_CHOICES = [
+        ('all', 'All Time'),
+        ('month', 'Current Month'),
+        ('year', 'Current Year'),
+    ]
+    
+    ANALYSIS_CHOICES = [
+        ('overview', 'Financial Overview'),
+        ('spending', 'Spending Analysis'),
+        ('saving', 'Saving Opportunities'),
+        ('trends', 'Financial Trends'),
+    ]
+    
+    period = forms.ChoiceField(choices=PERIOD_CHOICES, required=False)
+    analysis_type = forms.ChoiceField(choices=ANALYSIS_CHOICES, required=False)

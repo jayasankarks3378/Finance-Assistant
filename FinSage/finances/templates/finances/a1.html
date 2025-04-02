@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analysis Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        .insight-card {
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        .insight-card:hover {
+            transform: translateY(-5px);
+        }
+        .warning { border-color: #EF4444; }
+        .opportunity { border-color: #10B981; }
+        .achievement { border-color: #3B82F6; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Financial Analysis</h1>
+                <p class="text-gray-600">{{ financial_data.period }}</p>
+            </div>
+            
+            <!-- Filter Controls -->
+            <div class="mt-4 md:mt-0">
+                <form method="get" action="" class="flex flex-wrap gap-3">
+                    <select name="period" class="px-4 py-2 border rounded-md bg-white shadow-sm">
+                        <option value="all" {% if period == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="month" {% if period == 'month' %}selected{% endif %}>This Month</option>
+                        <option value="year" {% if period == 'year' %}selected{% endif %}>This Year</option>
+                    </select>
+                    
+                    <select name="type" class="px-4 py-2 border rounded-md bg-white shadow-sm">
+                        <option value="overview" {% if analysis_type == 'overview' %}selected{% endif %}>Overview</option>
+                        <option value="spending" {% if analysis_type == 'spending' %}selected{% endif %}>Spending</option>
+                        <option value="savings" {% if analysis_type == 'savings' %}selected{% endif %}>Savings</option>
+                    </select>
+                    
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Apply
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Income</h3>
+                    <div class="p-2 bg-green-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-2xl font-semibold text-gray-800">₹{{ total_income|floatformat:2 }}</p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Expenses</h3>
+                    <div class="p-2 bg-red-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-2xl font-semibold text-gray-800">₹{{ total_expenses|floatformat:2 }}</p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-gray-500 text-sm font-medium">Balance</h3>
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <p class="text-2xl font-semibold text-gray-800">₹{{ balance|floatformat:2 }}</p>
+                    <span class="ml-2 px-2 py-1 text-xs font-semibold rounded-full {% if financial_data.savings_rate > 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ financial_data.savings_rate|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Data Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Expense Categories Chart -->
+            <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Expense Breakdown</h2>
+                <div class="aspect-square">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Monthly Trends Chart -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Monthly Spending Trend</h2>
+                <div class="h-64">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Insights -->
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">AI Insights</h2>
+                
+                <div class="space-y-4" id="insightsContainer">
+                    {% if insights %}
+                        {{ insights|safe }}
+                    {% else %}
+                        <p class="text-gray-500">No insights available for the selected period.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Recommendations -->
+            <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Recommendations</h2>
+                
+                <div class="space-y-4">
+                    {% if recommendations %}
+                        {{ recommendations|safe }}
+                    {% else %}
+                        <p class="text-gray-500">No recommendations available for the selected period.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Recent Transactions</h2>
+                <a href="#" class="text-blue-600 hover:text-blue-800">View All</a>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for transaction in financial_data.recent_transactions %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ transaction.date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.description }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    {{ transaction.category }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">₹{{ transaction.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No recent transactions</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Format AI insights for better display
+        document.addEventListener('DOMContentLoaded', function() {
+            const insightsContainer = document.getElementById('insightsContainer');
+            if (insightsContainer) {
+                let content = insightsContainer.innerHTML;
+                
+                // Look for patterns like "Warning:" or "Opportunity:" or "Achievement:" 
+                content = content.replace(/Warning:/g, '<div class="insight-card warning p-4 bg-red-50 mb-4"><strong class="text-red-700">Warning:</strong>');
+                content = content.replace(/Opportunity:/g, '<div class="insight-card opportunity p-4 bg-green-50 mb-4"><strong class="text-green-700">Opportunity:</strong>');
+                content = content.replace(/Achievement:/g, '<div class="insight-card achievement p-4 bg-blue-50 mb-4"><strong class="text-blue-700">Achievement:</strong>');
+                
+                // Close divs at paragraph ends
+                const paragraphs = content.split('<p>');
+                for (let i = 1; i < paragraphs.length; i++) {
+                    if (paragraphs[i-1].includes('insight-card')) {
+                        paragraphs[i-1] = paragraphs[i-1].replace(/<\/p>/, '</p></div>');
+                    }
+                }
+                
+                insightsContainer.innerHTML = paragraphs.join('<p>');
+            }
+        });
+
+        // Expense Categories Chart
+        const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+        const expenseChart = new Chart(expenseCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for category in financial_data.expense_categories %}
+                        '{{ category.category }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for category in financial_data.expense_categories %}
+                            {{ category.amount }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                        '#EC4899', '#6366F1', '#F97316', '#14B8A6', '#D946EF'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const percentage = context.parsed || 0;
+                                return `${label}: ₹${value.toFixed(2)} (${percentage.toFixed(1)}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Monthly Trends Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        const trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for item in financial_data.monthly_trend reversed %}
+                        '{{ item.month }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Monthly Expenses',
+                    data: [
+                        {% for item in financial_data.monthly_trend reversed %}
+                            {{ item.amount }},
+                        {% endfor %}
+                    ],
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Expenses: ₹' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

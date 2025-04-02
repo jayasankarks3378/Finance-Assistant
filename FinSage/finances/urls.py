@@ -10,7 +10,8 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('', views.home, name='home'),
-    
+    path('analysis/', views.financial_analysis_view, name='analysis'),
+    # path('api/financial-data/', views.financial_data_api, name='financial_data_api'),
 
     # Income URLs
     path('add_income/', views.add_income, name='add_income'),

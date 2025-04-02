@@ -47,3 +47,19 @@ class BillUpload(models.Model):
     
     def __str__(self):
         return f"Bill uploaded by {self.user} at {self.uploaded_at}"
+    
+class FinancialAnalysis(models.Model):
+        user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+        created_at = models.DateTimeField(auto_now_add=True)
+        analysis_type = models.CharField(max_length=50)  # e.g., 'monthly', 'category', 'trend'
+        analysis_period = models.CharField(max_length=50, null=True, blank=True)  # e.g., 'Mar 2025'
+        insights = models.TextField()
+        recommendations = models.TextField(null=True, blank=True)
+        
+        def __str__(self):
+            return f"{self.analysis_type} analysis for {self.user} on {self.created_at.strftime('%Y-%m-%d')}"
+    
+        class Meta:
+            verbose_name = "Financial Analysis"
+            verbose_name_plural = "Financial Analyses"
+            ordering = ['-created_at']

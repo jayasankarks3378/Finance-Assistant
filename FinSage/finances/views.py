@@ -4,20 +4,257 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.conf import settings
-from django.db.models import Sum
 from django.core.paginator import Paginator
+from django.db import models
 from django.db.models import Sum
-
-from .models import Income, Expense
-from .forms import IncomeForm, ExpenseForm, BillUploadForm
-
-import os,csv,cv2,pytesseract,json,numpy as np
-from datetime import datetime
+from django.db.models.functions import TruncMonth
+from django.contrib.auth.models import User
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+import os, re, csv, cv2, pytesseract, json, numpy as np
 from dotenv import load_dotenv
 from groq import Groq
 
+from .models import Income, Expense, FinancialAnalysis
+from .forms import IncomeForm, ExpenseForm, BillUploadForm
 
+groq_client = Groq(api_key='your_api_key')
 
+@login_required
+def financial_analysis_view(request):
+    user = get_object_or_404(User, pk=request.user.pk)
+    
+    # Get user's financial data
+    incomes = Income.objects.filter(user=user).order_by('-date')
+    expenses = Expense.objects.filter(user=user).order_by('-date')
+    
+    # Get time period for analysis
+    period = request.GET.get('period', 'all')
+    analysis_type = request.GET.get('type', 'overview')
+    
+    # Filter data based on selected period
+    if period == 'month':
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        incomes = incomes.filter(date_month=current_month, date_year=current_year)
+        expenses = expenses.filter(date_month=current_month, date_year=current_year)
+        period_name = datetime.now().strftime('%B %Y')
+    elif period == 'year':
+        current_year = datetime.now().year
+        incomes = incomes.filter(date__year=current_year)
+        expenses = expenses.filter(date__year=current_year)
+        period_name = str(current_year)
+    else:
+        period_name = 'All Time'
+    
+    # Prepare data for AI analysis
+    total_income = incomes.aggregate(Sum('amount'))['amount__sum'] or 0
+    total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+    balance = total_income - total_expenses
+    savings_rate = (total_income - total_expenses) / total_income * 100 if total_income > 0 else 0
+    
+    # Group expenses by category - Fix for the 0 non-expression error
+    expense_by_category = []
+    if total_expenses > 0:  # Only perform this calculation if there are expenses
+        expense_categories = expenses.values('category').annotate(total=Sum('amount')).order_by('-total')
+        for category in expense_categories:
+            percentage = (category['total'] / total_expenses) * 100 if total_expenses > 0 else 0
+            expense_by_category.append({
+                'category': category['category'] or 'Uncategorized',
+                'total': float(category['total']),
+                'percentage': float(percentage)
+            })
+    
+    # Get recent transactions
+    recent_transactions = list(expenses.values('date', 'amount', 'description', 'category')[:10])
+    
+    # Monthly breakdown
+    monthly_data = expenses.annotate(
+        month=TruncMonth('date')
+    ).values('month').annotate(
+        total=Sum('amount')
+    ).order_by('-month')[:6]
+    
+    # Format data for analysis
+    financial_data = {
+        'period': period_name,
+        'analysis_type': analysis_type,
+        'total_income': float(total_income),
+        'total_expenses': float(total_expenses),
+        'balance': float(balance),
+        'savings_rate': float(savings_rate),
+        'expense_categories': expense_by_category,
+        'recent_transactions': [
+            {'date': transaction['date'].strftime('%Y-%m-%d'), 
+             'amount': float(transaction['amount']), 
+             'description': transaction['description'],
+             'category': transaction['category'] or 'Uncategorized'} 
+            for transaction in recent_transactions
+        ],
+        'monthly_trend': [
+            {'month': item['month'].strftime('%b %Y'), 
+             'amount': float(item['total'])} 
+            for item in monthly_data
+        ]
+    }
+    
+    # Existing analysis check
+    existing_analysis = None
+    if period != 'all':
+        try:
+            existing_analysis = FinancialAnalysis.objects.filter(
+                user=user,
+                analysis_type=analysis_type,
+                analysis_period=period_name
+            ).first()
+        except FinancialAnalysis.DoesNotExist:
+            existing_analysis = None
+    
+    insights, recommendations = None, None
+    if existing_analysis:
+        insights = existing_analysis.insights
+        recommendations = existing_analysis.recommendations
+    else:
+        # Generate insights using Groq API
+        try:
+            insights, recommendations = generate_ai_insights(financial_data)
+            
+            # Save analysis results
+            if insights:
+                FinancialAnalysis.objects.create(
+                    user=user,
+                    analysis_type=analysis_type,
+                    analysis_period=period_name,
+                    insights=insights,
+                    recommendations=recommendations
+                )
+        except Exception as e:
+            insights = f"Error generating insights: {str(e)}"
+            recommendations = "Please try again later."
+    
+    # Process recommendations for better display
+    processed_recommendations = []
+    if recommendations:
+        # Split by newlines or list markers
+        raw_recommendations = re.split(r'\n\s*\n|\n-|\d+\.\s+', recommendations)
+        for rec in raw_recommendations:
+            if rec.strip():  # Check if not empty after stripping whitespace
+                # Remove any stray list markers and clean up text
+                cleaned_rec = re.sub(r'^[-•]\s', '', rec.strip())
+                processed_recommendations.append(cleaned_rec)
+    
+    context = {
+        'financial_data': financial_data,
+        'insights': insights,
+        'recommendations': processed_recommendations,
+        'period': period,
+        'analysis_type': analysis_type,
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "balance": balance,
+    }
+    
+    return render(request, 'finances/analysis.html', context)
+
+def generate_ai_insights(financial_data):
+    """Generate financial insights using Groq API with improved formatting for insights and recommendations"""
+    
+    try:
+        # Your existing prompt code remains the same
+        prompt = f"""You are a financial advisor AI. Analyze the following financial data and provide:
+        1. Insightful observations about spending patterns, savings, and financial health
+        2. Specific, actionable recommendations that the user can implement immediately
+        
+        Financial data for period {financial_data['period']}:
+        - Total Income: ₹{financial_data['total_income']:.2f}
+        - Total Expenses: ₹{financial_data['total_expenses']:.2f}
+        - Balance: ₹{financial_data['balance']:.2f}
+        - Savings Rate: {financial_data['savings_rate']:.2f}%
+        
+        Expense Categories:
+        {json.dumps(financial_data['expense_categories'], indent=2)}
+        
+        Recent Transactions:
+        {json.dumps(financial_data['recent_transactions'], indent=2)}
+        
+        Monthly Spending Trend:
+        {json.dumps(financial_data['monthly_trend'], indent=2)}
+        
+        Provide the response in this format:
+        ---INSIGHTS---
+        Achievement: [First insight title]
+        [Write a meaningful insight with specific numbers from the data]
+        
+        Opportunity: [Second insight title]
+        [Write a meaningful insight with specific numbers from the data]
+        
+        Warning: [Third insight title]
+        [Write a meaningful insight with specific numbers from the data]
+        
+        [Add 1-2 more insights with clear titles if appropriate]
+        
+        ---RECOMMENDATIONS---
+        1. [Specific, immediate action the user can take] - [Brief explanation why this matters]
+        
+        2. [Another specific, immediate action] - [Brief explanation with quantifiable benefit]
+        
+        3. [Another specific action with a timeframe] - [Explanation with expected outcome]
+        
+        [Add 1 more recommendation if appropriate]
+        
+        Additional Instructions:
+        - Don't use vague recommendations like "consider" or "research". Instead, provide direct actionable steps.
+            Some examples that you shouldnt follow are:
+               1) **Implement Consistent Transaction Categorization**: Take 15 minutes to review and correct the categorization of all recent transactions. 
+                    Establish a routine to regularly review and categorize new transactions to ensure accuracy and maintain a clear picture of expenses.
+               2) **Review and Optimize Shopping Expenses**: Allocate 30 minutes each month to review shopping expenses and identify areas where costs can be reduced. 
+                    Set a goal to decrease shopping expenses by 10% within the next three months by exploring alternative options, such as buying in bulk or using coupons.
+               3) **Explore Bill Reduction Strategies**: Dedicate 1 hour to researching ways to reduce bills, such as negotiating with service providers or exploring more affordable alternatives.
+                    Aim to decrease bill expenses by 5% within the next two months by implementing cost-saving strategies.
+
+        - Use specific numbers and percentages from the data.
+        - Each recommendation should be something the user can start doing today.
+        - Avoid generic financial advice. Tailor everything to their specific situation. When user read the reccomendations they are to feel like it is personaly made for them and them only.
+        - Don't use special characters or markdown formatting like ** for bold or * for italics. I want just plain text.
+        """
+        
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.3,
+            max_tokens=1000
+        )
+        
+        response_text = response.choices[0].message.content
+        
+        # Parse insights and recommendations
+        insights_section = response_text.split('---INSIGHTS---')[-1].split('---RECOMMENDATIONS---')[0].strip()
+        recommendations_section = response_text.split('---RECOMMENDATIONS---')[-1].strip()
+        
+        # Improved processing for recommendations to remove all markdown
+        processed_recommendations = []
+        for line in recommendations_section.split('\n'):
+            if line.strip():
+                # Remove number prefixes like "1. " or "2. "
+                clean_line = re.sub(r'^\d+\.\s+', '', line.strip())
+                # Properly remove all asterisks (markdown bold/italic)
+                clean_line = re.sub(r'\*\*|\*', '', clean_line)
+                processed_recommendations.append(clean_line)
+        
+        # Join the processed recommendations
+        final_recommendations = '\n\n'.join(processed_recommendations)
+        
+        return insights_section, final_recommendations
+        
+    except Exception as e:
+        print(f"Error in Groq API processing: {str(e)}")
+        return "Unable to generate insights at this time.", "Please try again later."
+    
 # Load environment variables
 load_dotenv()
 pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD
@@ -239,14 +476,7 @@ def home(request):
     return render(request, 'finances/home.html')
 
 # Dashboard View
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from django.core.paginator import Paginator
-from django.db.models.functions import TruncMonth
-from .models import Income, Expense
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+
 
 @login_required
 def dashboard(request):
@@ -255,10 +485,39 @@ def dashboard(request):
     balance = total_income - total_expenses
     income_years = Income.objects.filter(user=request.user).dates('date', 'year', order='DESC')
     expense_years = Expense.objects.filter(user=request.user).dates('date', 'year', order='DESC')
-
     month = request.GET.get('month')
     year = request.GET.get('year')
     date = request.GET.get('date')
+    search_type = request.GET.get('search_type', 'income')
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    date = request.GET.get('date')
+    category = request.GET.get('category')
+    min_amount = request.GET.get('min_amount')
+    max_amount = request.GET.get('max_amount')
+    keyword = request.GET.get('keyword')
+    user = request.user
+
+    incomes = Income.objects.filter(user=user)
+    
+    if month:
+        incomes = incomes.filter(date__month=month)
+    if year:
+        incomes = incomes.filter(date__year=year)
+    if date:
+        incomes = incomes.filter(date=date)
+    if category:
+        incomes = incomes.filter(category__icontains=category)
+    if min_amount:
+        incomes = incomes.filter(amount__gte=min_amount)
+    if max_amount:
+        incomes = incomes.filter(amount__lte=max_amount)
+    if keyword:
+        incomes = incomes.filter(description__icontains=keyword)
+        incomes = incomes.order_by('-date')
+    total_income = incomes.aggregate(total=models.Sum('amount'))['total'] or 0
+    total_expenses = Expense.objects.filter(user=user).aggregate(total=models.Sum('amount'))['total'] or 0
+    balance = total_income - total_expenses
 
     try:
         month = int(month) if month else None
@@ -368,7 +627,6 @@ def dashboard(request):
         "balance": balance,
         "incomes": Income.objects.filter(user=request.user),
         "expenses": expenses_page,
-        # "expense_list": [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()],
         "available_months": range(1, 13),   
         "available_years": available_years,
         "chart_labels": chart_labels,
@@ -378,6 +636,13 @@ def dashboard(request):
         'income_data': income_data,
         'expense_data': expense_data,
         "expense_list": expense_list,
+        'incomes': incomes,
+        'search_type': search_type,
+        'month': month, 
+        'year': year,
+        'date': date,
+        'category': category,
+        'min_amount': min_amount,
     }
     
     return render(request, "finances/dashboard.html", context)

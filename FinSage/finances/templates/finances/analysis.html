@@ -1,0 +1,339 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analysis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js - Using a specific version known to work well -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/analysis.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="mb-0 animate-fadeIn"><i class="fas fa-chart-pie me-2"></i> Financial Analysis</h1>
+                    <p class="mb-0 mt-2 animate-fadeIn delay-1">Analyzing your finances for {{ financial_data.period }}</p>
+                </div>
+                <div class="col-lg-6 text-lg-end mt-3 mt-lg-0">
+                    <a href="?period=year&type={{ analysis_type }}" class="btn period-selector {% if period == 'year' %}active{% endif %} animate-fadeIn delay-3">
+                        <i class="fas fa-calendar me-1"></i> This Year
+                    </a>
+                    <a href="?period=all&type={{ analysis_type }}" class="btn period-selector {% if period == 'all' %}active{% endif %} animate-fadeIn delay-4">
+                        <i class="fas fa-infinity me-1"></i> All Time
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="stat-card income-card animate-fadeIn delay-1">
+                    <div>
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <h3>₹{{ total_income|floatformat:2 }}</h3>
+                        <p class="mb-0">Total Income</p>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar progress-income" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="stat-card expense-card animate-fadeIn delay-2">
+                    <div>
+                        <i class="fas fa-shopping-cart"></i>
+                        <h3>₹{{ total_expenses|floatformat:2 }}</h3>
+                        <p class="mb-0">Total Expenses</p>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar progress-expense" style="width: {{ financial_data.total_expenses|floatformat:0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card balance-card animate-fadeIn delay-3">
+                    <div>
+                        <i class="fas fa-wallet"></i>
+                        <h3>₹{{ balance|floatformat:2 }}</h3>
+                        <p class="mb-0">Balance</p>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ financial_data.savings_rate|floatformat:0 }}%; background-color: rgba(255, 255, 255, 0.5);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Monthly Trend -->
+                <div class="card animate-fadeIn delay-2">
+                    <!-- <div class="card-body">
+                        <h4 class="card-title"><i class="fas fa-chart-line me-2"></i>Monthly Spending Trend</h4>
+                        <div class="chart-container">
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
+                    </div> -->
+                </div>
+
+                <!-- AI Analysis -->
+                <div class="card animate-fadeIn delay-3">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-robot me-2"></i>AI Financial Insights</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="saving-rate-container">
+                                    <i class="fas fa-piggy-bank fa-2x mb-2"></i>
+                                    <p class="mb-0">Your Savings Rate</p>
+                                    <div class="saving-rate">{{ financial_data.savings_rate|floatformat:1 }}%</div>
+                                    {% if financial_data.savings_rate > 20 %}
+                                    <span class="badge bg-success mt-2">Excellent</span>
+                                    {% elif financial_data.savings_rate > 10 %}
+                                    <span class="badge bg-warning text-dark mt-2">Good</span>
+                                    {% else %}
+                                    <span class="badge bg-danger mt-2">Needs Improvement</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div id="insightsContainer" class="insights-container">
+                                    <!-- This will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mb-3"><i class="fas fa-lightbulb me-2"></i>Actionable Recommendations</h5>
+                        <div class="timeline">
+                            {% for recommendation in recommendations %}
+                            <div class="timeline-item">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <p class="timeline-text">{{ recommendation|safe }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                <!-- Expense Categories -->
+                <div class="card animate-fadeIn delay-4">
+                    <div class="card-body">
+                        <!-- <h4 class="card-title"><i class="fas fa-tags me-2"></i>Expense Categories</h4>
+                        <div class="chart-container mb-3">
+                            <canvas id="categoryChart"></canvas>
+                        </div> -->
+                        <div class="mt-4">
+                            {% for category in financial_data.expense_categories %}
+                            <div class="expense-category expense-category-{% if forloop.counter <= 6 %}{{ forloop.counter }}{% else %}other{% endif %}">
+                                <span>{{ category.category }}</span>
+                                <div>
+                                    <span class="fw-bold">₹{{ category.amount|floatformat:2 }}</span>
+                                    <span class="expense-percentage ms-2">({{ category.percentage|floatformat:1 }}%)</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="card animate-fadeIn delay-5">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="fas fa-history me-2"></i>Recent Transactions</h4>
+                        <div class="transaction-list">
+                            {% for transaction in financial_data.recent_transactions %}
+                            <div class="transaction-item expense">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="transaction-date"><i class="far fa-calendar-alt me-1"></i>{{ transaction.date }}</span>
+                                    <span class="transaction-category">{{ transaction.category }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="transaction-description">{{ transaction.description }}</span>
+                                    <span class="transaction-amount text-danger">-₹{{ transaction.amount|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="footer-title">Financial Tracker</h5>
+                    <p>Take control of your finances with our comprehensive tracking and analysis tools.</p>
+                    <div class="mt-4">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5 class="footer-title">Features</h5>
+                    <a href="/dashboard/" class="footer-link">Dashboard</a>
+                    <a href="/add-expense/" class="footer-link">Add Expense</a>
+                    <a href="/add-income/" class="footer-link">Add Income</a>
+                    <a href="/analysis/" class="footer-link">Analysis</a>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5 class="footer-title">Resources</h5>
+                    <a href="#" class="footer-link">Blog</a>
+                    <a href="#" class="footer-link">Help Center</a>
+                    <a href="#" class="footer-link">FAQ</a>
+                    <a href="#" class="footer-link">Contact</a>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h5 class="footer-title">Stay Updated</h5>
+                    <p>Subscribe to our newsletter for tips and updates.</p>
+                    <div class="input-group mt-3">
+                        <input type="email" class="form-control" placeholder="Your email" aria-label="Your email" style="border-radius: 50px 0 0 50px;">
+                        <button class="btn btn-primary" type="button" style="border-radius: 0 50px 50px 0;">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright text-center">
+                <p>© 2025 Financial Tracker. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>    
+            // Process insights
+            const insightsContainer = document.getElementById('insightsContainer');
+            if (insightsContainer) {
+                let insightsText = insights || "";
+                
+                if (insightsText && insightsText.length > 0) {
+                    // Split into paragraphs and remove any empty ones
+                    const paragraphs = insightsText.split(/\.\s+/).filter(p => p.trim().length > 0);
+                    insightsContainer.innerHTML = '';
+                    
+                    // Insight types with proper styling
+                    const insightTypes = [
+                        { type: 'achievement', icon: 'trophy', color: '#48bb78' },
+                        { type: 'opportunity', icon: 'lightbulb', color: '#48b2bf' },
+                        { type: 'warning', icon: 'exclamation-triangle', color: '#ff5a5f' },
+                        { type: 'trend', icon: 'chart-line', color: '#6930c3' }
+                    ];
+                    
+                    // Create formatted insight paragraphs
+                    paragraphs.forEach((paragraph, index) => {
+                        if (paragraph.trim()) {
+                            let title = "";
+                            let style = insightTypes[index % insightTypes.length];
+                            
+                            // Try to extract a title from the paragraph
+                            for (const type of insightTypes) {
+                                if (paragraph.toLowerCase().includes(type.type.toLowerCase() + ":")) {
+                                    style = type;
+                                    const parts = paragraph.split(":");
+                                    title = parts[0].trim();
+                                    paragraph = parts.slice(1).join(':').trim();
+                                    break;
+                                }
+                            }
+                            
+                            const div = document.createElement('div');
+                            div.className = 'insight-paragraph';
+                            div.innerHTML = `
+                                <span class="insight-type insight-${style.type}">
+                                    <i class="fas fa-${style.icon} me-1"></i> 
+                                    ${title || style.type.charAt(0).toUpperCase() + style.type.slice(1)}
+                                </span>
+                                <p>${paragraph}</p>
+                            `;
+                            insightsContainer.appendChild(div);
+                        }
+                    });
+                } else {
+                    insightsContainer.innerHTML = '<div class="alert alert-info">No insights available for this time period yet.</div>';
+                }
+            }
+            
+            // Process recommendation text
+            const recommendations = document.querySelectorAll('.timeline-text');
+            recommendations.forEach(rec => {
+                let text = rec.innerHTML;
+                
+                // Add action icons to make recommendations more actionable
+                const actionIcons = {
+                    'budget': 'fa-calculator',
+                    'save': 'fa-piggy-bank',
+                    'track': 'fa-chart-line',
+                    'review': 'fa-search',
+                    'reduce': 'fa-scissors',
+                    'invest': 'fa-chart-line',
+                    'plan': 'fa-calendar-alt',
+                    'research': 'fa-search'
+                };
+                
+                // Find an appropriate icon based on keywords
+                let iconClass = 'fa-check-circle';
+                for (const [keyword, icon] of Object.entries(actionIcons)) {
+                    if (text.toLowerCase().includes(keyword)) {
+                        iconClass = icon;
+                        break;
+                    }
+                }
+                
+                // Add icon to start of recommendation
+                rec.innerHTML = <i class="fas ${iconClass} me-2" style="color: var(--primary-color);"></i> ${text};
+            });
+            
+            // Animate elements when they come into view
+            const animateOnScroll = function() {
+                const elements = document.querySelectorAll('.card, .stat-card');
+                
+                elements.forEach(element => {
+                    const elementPosition = element.getBoundingClientRect();
+                    const windowHeight = window.innerHeight;
+                    
+                    if (elementPosition.top < windowHeight - 100) {
+                        if (!element.classList.contains('animate-fadeIn')) {
+                            element.classList.add('animate-fadeIn');
+                        }
+                    }
+                });
+            };
+            
+            // Initial check
+            animateOnScroll();
+            
+            // Check on scroll
+            window.addEventListener('scroll', animateOnScroll);
+        });
+    </script>
+</body>
+</html>
