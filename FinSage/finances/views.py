@@ -157,14 +157,12 @@ def financial_analysis_view(request):
     return render(request, 'finances/analysis.html', context)
 
 def generate_ai_insights(financial_data):
-    """Generate financial insights using Groq API with improved formatting for insights and recommendations"""
-    
     try:
         # Your existing prompt code remains the same
         prompt = f"""You are a financial advisor AI. Analyze the following financial data and provide:
         1. Insightful observations about spending patterns, savings, and financial health
         2. Specific, actionable recommendations that the user can implement immediately
-        
+
         Financial data for period {financial_data['period']}:
         - Total Income: ₹{financial_data['total_income']:.2f}
         - Total Expenses: ₹{financial_data['total_expenses']:.2f}
@@ -173,10 +171,8 @@ def generate_ai_insights(financial_data):
         
         Expense Categories:
         {json.dumps(financial_data['expense_categories'], indent=2)}
-        
         Recent Transactions:
         {json.dumps(financial_data['recent_transactions'], indent=2)}
-        
         Monthly Spending Trend:
         {json.dumps(financial_data['monthly_trend'], indent=2)}
         
@@ -184,20 +180,15 @@ def generate_ai_insights(financial_data):
         ---INSIGHTS---
         Achievement: [First insight title]
         [Write a meaningful insight with specific numbers from the data]
-        
         Opportunity: [Second insight title]
         [Write a meaningful insight with specific numbers from the data]
-        
         Warning: [Third insight title]
         [Write a meaningful insight with specific numbers from the data]
-        
         [Add 1-2 more insights with clear titles if appropriate]
         
         ---RECOMMENDATIONS---
         1. [Specific, immediate action the user can take] - [Brief explanation why this matters]
-        
         2. [Another specific, immediate action] - [Brief explanation with quantifiable benefit]
-        
         3. [Another specific action with a timeframe] - [Explanation with expected outcome]
         
         [Add 1 more recommendation if appropriate]
@@ -349,7 +340,7 @@ def ai_extract(text_content):
 
     try:
         response = groq_client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "user",
@@ -425,8 +416,6 @@ def export_expenses(request):
     return response
 
 # Signup View
-# finances/views.py
-
 
 def signup(request):
     if request.method == 'POST':
@@ -475,19 +464,15 @@ def logout_view(request):
 def home(request):
     return render(request, 'finances/home.html')
 
-# Dashboard View
-
-
 @login_required
 def dashboard(request):
     total_income = Income.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
     total_expenses = Expense.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
     balance = total_income - total_expenses
+    # Get unique years for filtering
     income_years = Income.objects.filter(user=request.user).dates('date', 'year', order='DESC')
     expense_years = Expense.objects.filter(user=request.user).dates('date', 'year', order='DESC')
-    month = request.GET.get('month')
-    year = request.GET.get('year')
-    date = request.GET.get('date')
+    # Get all filter parameters
     search_type = request.GET.get('search_type', 'income')
     month = request.GET.get('month')
     year = request.GET.get('year')
@@ -497,8 +482,8 @@ def dashboard(request):
     max_amount = request.GET.get('max_amount')
     keyword = request.GET.get('keyword')
     user = request.user
-
-    incomes = Income.objects.filter(user=user)
+    # Filter incomes
+    incomes = Income.objects.filter(user=request.user)
     
     if month:
         incomes = incomes.filter(date__month=month)
@@ -508,59 +493,77 @@ def dashboard(request):
         incomes = incomes.filter(date=date)
     if category:
         incomes = incomes.filter(category__icontains=category)
-    if min_amount:
-        incomes = incomes.filter(amount__gte=min_amount)
-    if max_amount:
-        incomes = incomes.filter(amount__lte=max_amount)
-    if keyword:
+    if min_amount and min_amount.strip():
+        try:
+            min_amount_float = float(min_amount)
+            incomes = incomes.filter(amount__gte=min_amount_float)
+        except (ValueError, TypeError):
+            # Handle invalid input silently
+            pass
+    if max_amount and max_amount.strip():
+        try:
+            max_amount_float = float(max_amount)
+            incomes = incomes.filter(amount__lte=max_amount_float)
+        except (ValueError, TypeError):
+            # Handle invalid input silently
+            pass
+    if keyword and keyword.strip():
         incomes = incomes.filter(description__icontains=keyword)
-        incomes = incomes.order_by('-date')
-    total_income = incomes.aggregate(total=models.Sum('amount'))['total'] or 0
-    total_expenses = Expense.objects.filter(user=user).aggregate(total=models.Sum('amount'))['total'] or 0
-    balance = total_income - total_expenses
 
-    try:
-        month = int(month) if month else None
-        year = int(year) if year else None
-    except ValueError:
-        month = None
-        year = None
+    # Calculate filtered income total
+    filtered_income_total = incomes.aggregate(total=Sum('amount'))['total'] or 0
 
+    # Filter expenses - apply the same filters as income for consistency
     expenses = Expense.objects.filter(user=request.user)
     
-    if month and year:
-        expenses = expenses.filter(date__month=month, date__year=year)
-    elif month:
+    if month:
         expenses = expenses.filter(date__month=month)
-    elif year:
+    if year:
         expenses = expenses.filter(date__year=year)
     if date:
         expenses = expenses.filter(date=date)
+    if category:
+        expenses = expenses.filter(category__icontains=category)
+    if min_amount and min_amount.strip():
+        try:
+            min_amount_float = float(min_amount)
+            expenses = expenses.filter(amount__gte=min_amount_float)
+        except (ValueError, TypeError):
+            # Handle invalid input silently
+            pass
+    if max_amount and max_amount.strip():
+        try:
+            max_amount_float = float(max_amount)
+            expenses = expenses.filter(amount__lte=max_amount_float)
+        except (ValueError, TypeError):
+            # Handle invalid input silently
+            pass
+    if keyword and keyword.strip():
+        expenses = expenses.filter(description__icontains=keyword)
+        
+    # Calculate filtered expense total
+    filtered_expense_total = expenses.aggregate(total=Sum('amount'))['total'] or 0
+    filtered_balance = filtered_income_total - filtered_expense_total
 
-    # Fix "None" issue in expenses by ensuring month_year is set correctly
+    # Group expenses by month-year
     expense_data = {}
     for expense in expenses:
-        if expense.date:
-            key = expense.date.strftime("%B %Y")
-        else:
-            key = "Unknown Date"
-
+        key = expense.date.strftime("%B %Y") if expense.date else "Unknown Date"
         if key not in expense_data:
             expense_data[key] = {'total': 0, 'list': []}
         expense_data[key]['total'] += expense.amount
         expense_data[key]['list'].append(expense)
         
-    expense_list = []
-    if isinstance(expense_data, dict):
-        expense_list = [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()]
+    expense_list = [{'grouper': k, 'total': v['total'], 'list': v['list']} for k, v in expense_data.items()]
 
+    # Available years for filtering
     available_years = sorted(set(
         y.year for y in Income.objects.filter(user=request.user).dates('date', 'year', order='DESC')
     ) | set(
         y.year for y in Expense.objects.filter(user=request.user).dates('date', 'year', order='DESC')
     ), reverse=True)
 
-    # Pagination: Show 7 expenses per page (example)
+    # Pagination: Show 7 expenses per page
     paginator = Paginator(expenses, 7)  
     page_number = request.GET.get('page')
     expenses_page = paginator.get_page(page_number)
@@ -615,17 +618,21 @@ def dashboard(request):
     # Aggregate income and expenses by category
     income_by_category = Income.objects.filter(user=request.user).values('category').annotate(total_amount=Sum('amount'))
     expense_by_category = Expense.objects.filter(user=request.user).values('category').annotate(total_amount=Sum('amount'))
+    
+    # Extract unique categories
+    categories = list(set(
+        [item['category'] for item in income_by_category if item['category']] + 
+        [item['category'] for item in expense_by_category if item['category']]
+    ))
 
-    # Prepare data for the chart
-    categories = list(set([item['category'] for item in income_by_category] + [item['category'] for item in expense_by_category]))
+    # Prepare data for the category chart
     income_data = [next((item['total_amount'] for item in income_by_category if item['category'] == category), 0) for category in categories]
     expense_data = [next((item['total_amount'] for item in expense_by_category if item['category'] == category), 0) for category in categories]
 
     context = {
-        "total_income": total_income,
-        "total_expenses": total_expenses,
+        "total_income_overall": total_income,
+        "total_expenses_overall": total_expenses,
         "balance": balance,
-        "incomes": Income.objects.filter(user=request.user),
         "expenses": expenses_page,
         "available_months": range(1, 13),   
         "available_years": available_years,
@@ -643,11 +650,26 @@ def dashboard(request):
         'date': date,
         'category': category,
         'min_amount': min_amount,
+        "max_amount": max_amount,
+        "keyword": keyword,
+        # Filtered totals
+        "total_income": filtered_income_total,
+        "total_expenses": filtered_expense_total,
+        "balance": filtered_balance,
+        
+        "current_filters": {
+            "month": month,
+            "year": year,
+            "date": date,
+            "category": category,
+            "min_amount": min_amount,
+            "max_amount": max_amount,
+            "keyword": keyword
+        }
     }
     
     return render(request, "finances/dashboard.html", context)
 
-# Add Income
 @login_required
 def add_income(request):
     if request.method == 'POST':
@@ -661,7 +683,6 @@ def add_income(request):
 
     return render(request, 'finances/add_income.html', {'form': form})
 
-# Add Expense
 @login_required
 def add_expense(request):
     if request.method == 'POST':

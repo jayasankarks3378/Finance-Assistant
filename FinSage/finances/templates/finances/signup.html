@@ -286,20 +286,6 @@
                     {% endif %}
                 </div>
 
-                <div class="input-group">
-                    <div class="input-icon-wrapper">
-                        <input type="email" name="email" class="form-input" placeholder="Email Address"
-                               value="{{ form.email.value|default:'' }}" required>
-                        <i class="fas fa-envelope input-icon"></i>
-                    </div>
-                    {% if form.email.errors %}
-                        <div class="error-list">
-                            {% for error in form.email.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
 
                 <div class="input-group">
                     <div class="input-icon-wrapper">

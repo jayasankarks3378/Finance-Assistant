@@ -39,7 +39,7 @@
                                 <li><a class="dropdown-item" href="{% url 'finances:export_expenses' %}"><i class="fas fa-file-export me-2"></i>Export Expenses</a></li>
                                 <li><a class="dropdown-item" href="{% url 'finances:add_income' %}"><i class="fas fa-plus-circle me-2"></i>Add Income</a></li>
                                 <li><a class="dropdown-item" href="{% url 'finances:add_expense' %}"><i class="fas fa-minus-circle me-2"></i>Add Expense</a></li>
-                                <li><a class="dropdown-item" href="{% url 'finances:analysis' %}"><i class="fas fa-minus-circle me-2"></i>Analysis</a></li>
+                                <li><a class="dropdown-item" href="{% url 'finances:analysis' %}"><i class="fas fa-chart-line me-2"></i></i>Analysis</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                             </ul>
@@ -86,6 +86,29 @@
             </div>
         </div>
         
+        <!-- Main Tab Navigation -->
+<ul class="nav nav-tabs mt-4" id="mainTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-pane" type="button" role="tab" aria-controls="dashboard-pane" aria-selected="true">
+            <i class="fas fa-chart-pie me-2"></i>Dashboard
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="income-tab" data-bs-toggle="tab" data-bs-target="#income-pane" type="button" role="tab" aria-controls="income-pane" aria-selected="false">
+            <i class="fas fa-plus-circle me-2"></i>Income
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="expense-tab" data-bs-toggle="tab" data-bs-target="#expense-pane" type="button" role="tab" aria-controls="expense-pane" aria-selected="false">
+            <i class="fas fa-minus-circle me-2"></i>Expenses
+        </button>
+    </li>
+</ul>
+        
+<!-- Tab Content -->
+<div class="tab-content mt-3" id="mainTabContent">
+    <!-- Dashboard Tab (Graphs) -->
+    <div class="tab-pane fade show active" id="dashboard-pane" role="tabpanel" aria-labelledby="dashboard-tab">
         <!-- Charts Row -->
         <div class="row mb-4 animate__animated animate__fadeIn">
             <div class="col-md-6">
@@ -102,10 +125,199 @@
             </div>
         </div>
 
+        <div id="search-section" class="search-container p-4 rounded shadow-sm animate__animated animate__fadeIn mb-4 bg-white">
+            <h4 class="mb-3"><i class="fas fa-filter me-2"></i>Filter Your Financial Data</h4>
+        
+            <ul class="nav nav-tabs nav-fill" id="searchTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="expense-search-tab" data-bs-toggle="tab" data-bs-target="#expense-search" type="button" role="tab" aria-controls="expense-search" aria-selected="true">
+                        <i class="fas fa-shopping-cart me-2"></i> Filters
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content mt-4" id="searchTabContent">
+                <!-- Expense Search Tab -->
+                <div class="tab-pane fade show active" id="expense-search" role="tabpanel" aria-labelledby="expense-search-tab">
+                    <form method="GET" action="" class="row g-3" id="expense-search-form">
+                        <input type="hidden" name="search_type" value="expense">
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-calendar me-2"></i>Time Period
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="expense_month" class="form-label">Month</label>
+                                        <select name="month" id="expense_month" class="form-select">
+                                            <option value="">All Months</option>
+                                            <option value="1" {% if request.GET.month == '1' %}selected{% endif %}>January</option>
+                                            <option value="2" {% if request.GET.month == '2' %}selected{% endif %}>February</option>
+                                            <option value="3" {% if request.GET.month == '3' %}selected{% endif %}>March</option>
+                                            <option value="4" {% if request.GET.month == '4' %}selected{% endif %}>April</option>
+                                            <option value="5" {% if request.GET.month == '5' %}selected{% endif %}>May</option>
+                                            <option value="6" {% if request.GET.month == '6' %}selected{% endif %}>June</option>
+                                            <option value="7" {% if request.GET.month == '7' %}selected{% endif %}>July</option>
+                                            <option value="8" {% if request.GET.month == '8' %}selected{% endif %}>August</option>
+                                            <option value="9" {% if request.GET.month == '9' %}selected{% endif %}>September</option>
+                                            <option value="10" {% if request.GET.month == '10' %}selected{% endif %}>October</option>
+                                            <option value="11" {% if request.GET.month == '11' %}selected{% endif %}>November</option>
+                                            <option value="12" {% if request.GET.month == '12' %}selected{% endif %}>December</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="expense_year" class="form-label">Year</label>
+                                        <select name="year" id="expense_year" class="form-select">
+                                            <option value="">All Years</option>
+                                            {% for year in available_years %}
+                                                <option value="{{ year }}" {% if request.GET.year == year|stringformat:"i" %}selected{% endif %}>{{ year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-tags me-2"></i>Categories & Description
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="expense_category" class="form-label">Category</label>
+                                        <select name="category" id="expense_category" class="form-select">
+                                            <option value="">All Categories</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category }}" {% if request.GET.category == category %}selected{% endif %}>{{ category }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-0">
+                                        <label for="expense_keyword" class="form-label">Search by Description</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            <input type="text" name="keyword" id="expense_keyword" class="form-control" placeholder="Enter keywords..." value="{{ request.GET.keyword|default:'' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-rupee-sign me-2"></i>Amount Range
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="expense_min_amount" class="form-label">Minimum Amount (₹)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" name="min_amount" id="expense_min_amount" class="form-control" value="{{ request.GET.min_amount|default:'' }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-0">
+                                        <label for="expense_max_amount" class="form-label">Maximum Amount (₹)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" name="max_amount" id="expense_max_amount" class="form-control" value="{{ request.GET.max_amount|default:'' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mt-4 d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-2"></i> Apply Filters
+                            </button>
+                            
+                            <a href="{% url 'finances:dashboard' %}" class="btn btn-outline-danger ms-auto">
+                                <i class="fas fa-times me-2"></i> Clear All Filters
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Active Filters Section -->
+            {% if request.GET %}
+                <div class="active-filters mt-4 p-3 bg-light rounded" id="activeFilters">
+                    <h6><i class="fas fa-filter me-2"></i>Active Filters:</h6>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        {% for key, value in request.GET.items %}
+                            {% if value and key != 'search_type' and key != 'page' %}
+                                <span class="badge rounded-pill bg-primary filter-badge py-2 px-3">
+                                    {% if key == 'month' %}
+                                        {% with month_name=value|add:"0"|stringformat:"s"|slice:"1:"|make_list|join:"" %}
+                                            {% if month_name == '1' %}
+                                                Month: January
+                                            {% elif month_name == '2' %}
+                                                Month: February
+                                            {% elif month_name == '3' %}
+                                                Month: March
+                                            {% elif month_name == '4' %}
+                                                Month: April
+                                            {% elif month_name == '5' %}
+                                                Month: May
+                                            {% elif month_name == '6' %}
+                                                Month: June
+                                            {% elif month_name == '7' %}
+                                                Month: July
+                                            {% elif month_name == '8' %}
+                                                Month: August
+                                            {% elif month_name == '9' %}
+                                                Month: September
+                                            {% elif month_name == '10' %}
+                                                Month: October
+                                            {% elif month_name == '11' %}
+                                                Month: November
+                                            {% elif month_name == '12' %}
+                                                Month: December
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% elif key == 'min_amount' %}
+                                        Min Amount: ₹{{ value }}
+                                    {% elif key == 'max_amount' %}
+                                        Max Amount: ₹{{ value }}
+                                    {% elif key == 'start_date' %}
+                                        From: {{ value }}
+                                    {% elif key == 'end_date' %}
+                                        To: {{ value }}
+                                    {% elif key == 'keyword' %}
+                                        Keyword: "{{ value }}"
+                                    {% else %}
+                                        {{ key|title }}: {{ value }}
+                                    {% endif %}
+                                    <i class="fas fa-times-circle ms-2 remove-filter" data-filter="{{ key }}"></i>
+                                </span>
+                            {% endif %}
+                        {% endfor %}
+                        <a href="{% url 'finances:dashboard' %}" class="btn btn-sm btn-outline-secondary ms-2">
+                            Clear All
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Income Tab -->
+    <div class="tab-pane fade" id="income-pane" role="tabpanel" aria-labelledby="income-tab">
         <h3 class="section-title animate__animated animate__fadeIn">Income Entries</h3>
         <div class="table-container animate__animated animate__fadeInUp">
+            <div class="table-actions mb-3">
+                <button class="btn btn-success" id="exportIncomeBtn">
+                    <i class="fas fa-file-export me-2"></i>Export Income Data
+                </button>
+            </div>
             <div class="table-responsive">
-                <table class="table">
+                <table class="table" id="incomeTable">
                     <thead>
                         <tr>
                             <th>Amount</th>
@@ -135,68 +347,24 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="4" class="text-center">No income entries found.</td>
+                                <td colspan="5" class="text-center">No income entries found.</td>
                             </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <h3 class="section-title mt-4 animate__animated animate__fadeIn">Expense Management</h3>
-
-        <div id="search-section" class="search-container p-3 animate__animated animate__fadeIn">
-            <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filter Expenses</h5>
-            <form method="GET" action="" class="row g-2">
-                <div class="col-md-4">
-                    <label for="month" class="form-label">Month</label>
-                    <select name="month" id="month" class="form-select">
-                        <option value="">Default</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                    </select>
-                </div>
-        
-                <div class="col-md-4">
-                    <label for="year" class="form-label">Year</label>
-                    <select name="year" id="year" class="form-select">
-                        <option value="">All Years</option>
-                        {% for year in available_years %}
-                            <option value="{{ year }}">{{ year }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label for="date" class="form-label">Date</label>
-                    <input type="date" name="date" id="date" class="form-control" placeholder="Search by date" value="{{ request.GET.date|default:'' }}">
-                </div>
-        
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-2"></i> Search</button>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <a href="{% url 'finances:dashboard' %}" class="btn btn-secondary w-100">
-                        <i class="fas fa-sync-alt me-2"></i> Reset
-                    </a>
-                </div>
-            </form>
-
-            <div class="active-filters mt-3" id="activeFilters">
-                <!-- Active filters will be displayed here -->
-            </div>
-        </div>
+    </div>
     
+    <!-- Expense Tab -->
+    <div class="tab-pane fade" id="expense-pane" role="tabpanel" aria-labelledby="expense-tab">
+        <h3 class="section-title mt-4 animate__animated animate__fadeIn">Expense Management</h3>
+        <div class="table-actions mb-3">
+            <button class="btn btn-danger" id="exportExpenseBtn">
+                <i class="fas fa-file-export me-2"></i>Export Expense Data
+            </button>
+        </div>
+        
         {% regroup expenses by month_year as expense_list %}
         
         {% for month_expenses in expense_list %}
@@ -204,7 +372,7 @@
             <div id="expense-{{ forloop.counter }}" class="collapse show">
                 <div class="table-container">
                     <div class="table-responsive">
-                        <table class="table mb-0">
+                        <table class="table mb-0" id="expenseTable">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -252,23 +420,68 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+</div>
 
-        <div class="pagination animate__animated animate__fadeIn">
-            {% if expenses.has_previous %}
-                <button onclick="location.href='?page={{ expenses.previous_page_number }}&month={{ request.GET.month }}&year={{ request.GET.year }}&category={{ request.GET.category }}'">
-                    <i class="fas fa-chevron-left me-1"></i> Previous
-                </button>
-            {% endif %}
-            
-            <button class="active">{{ expenses.number }}</button>
-            
-            {% if expenses.has_next %}
-                <button onclick="location.href='?page={{ expenses.next_page_number }}&month={{ request.GET.month }}&year={{ request.GET.year }}&category={{ request.GET.category }}'">
-                    Next <i class="fas fa-chevron-right ms-1"></i>
-                </button>
-            {% endif %}
+<!-- Modal for PDF Export -->
+<div class="modal fade" id="pdfExportModal" tabindex="-1" aria-labelledby="pdfExportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pdfExportModalLabel">Export Financial Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pdfExportForm">
+                    <div class="mb-3">
+                        <label for="reportType" class="form-label">Report Type</label>
+                        <select class="form-select" id="reportType" name="reportType">
+                            <option value="all">Complete Financial Report</option>
+                            <option value="income">Income Report Only</option>
+                            <option value="expense">Expense Report Only</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="includeCharts" class="form-label">Include Charts</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="true" id="includeCharts" name="includeCharts" checked>
+                            <label class="form-check-label" for="includeCharts">
+                                Yes, include visual charts
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="includeSummary" class="form-label">Include Summary</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="true" id="includeSummary" name="includeSummary" checked>
+                            <label class="form-check-label" for="includeSummary">
+                                Yes, include financial summary
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="generatePdfBtn">Generate PDF</button>
+            </div>
         </div>
     </div>
+</div>
 
 
     {{ chart_labels|json_script:"chart-labels" }}
@@ -282,72 +495,733 @@
             <p>&copy; 2021 FinSage. All Rights Reserved.</p>
         </div>
     </footer>
-<script>
-    function closeMessage(closeBtn) {
-        let messageDiv = closeBtn.parentElement;
-        messageDiv.classList.add("animate__fadeOut"); 
-        setTimeout(() => messageDiv.style.display = "none", 100);
-    }
 
-    function confirmDelete(type) {
-        return confirm(`Are you sure you want to delete this ${type}?`);
-    }
+        <!-- External JavaScript Files -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/dash.js' %}"></script>
+    <script>
+        function closeMessage(closeBtn) {
+            let messageDiv = closeBtn.parentElement;
+            messageDiv.classList.add("animate__fadeOut"); 
+            setTimeout(() => messageDiv.style.display = "none", 100);
+        }
+    
+        function confirmDelete(type) {
+            return confirm(`Are you sure you want to delete this ${type}?`);
+        }
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            // Export PDF functionality
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            const exportIncomeBtn = document.getElementById('exportIncomeBtn');
+            const exportExpenseBtn = document.getElementById('exportExpenseBtn');
+            const pdfExportModal = document.getElementById('pdfExportModal') ? 
+                new bootstrap.Modal(document.getElementById('pdfExportModal')) : null;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Trend Chart
-        var ctx = document.getElementById('trendChart').getContext('2d');
-        
-        var chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
-        var chartIncome = JSON.parse(document.getElementById('chart-income').textContent);
-        var chartExpenses = JSON.parse(document.getElementById('chart-expenses').textContent);
-        
-        new Chart(ctx, {
-            type: 'line',
+            // Set current date as default for report date range
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            // Check if date fields exist before setting values
+            const startDateField = document.getElementById('startDate');
+            const endDateField = document.getElementById('endDate');
+            if (startDateField) startDateField.valueAsDate = firstDayOfMonth;
+            if (endDateField) endDateField.valueAsDate = today;
+
+            // Function to handle opening the PDF export modal with default values
+            function openPdfExportModal(reportType) {
+                if (!pdfExportModal) {
+                    console.error('PDF Export Modal not found');
+                    return;
+                }
+                const reportTypeField = document.getElementById('reportType');
+                if (reportTypeField) reportTypeField.value = reportType;
+                pdfExportModal.show();
+            }
+
+            // Event listeners for export buttons - add null checks
+            if (exportPdfBtn) exportPdfBtn.addEventListener('click', () => openPdfExportModal('all'));
+            if (exportIncomeBtn) exportIncomeBtn.addEventListener('click', () => openPdfExportModal('income'));
+            if (exportExpenseBtn) exportExpenseBtn.addEventListener('click', () => openPdfExportModal('expense'));
+
+            // Generate PDF functionality
+            const generatePdfBtn = document.getElementById('generatePdfBtn');
+            if (generatePdfBtn) {
+                generatePdfBtn.addEventListener('click', async function() {
+                    try {
+                        const reportType = document.getElementById('reportType').value;
+                        const startDate = document.getElementById('startDate').value;
+                        const endDate = document.getElementById('endDate').value;
+                        const includeCharts = document.getElementById('includeCharts').checked;
+                        const includeSummary = document.getElementById('includeSummary').checked;
+                        
+                        // Check if jsPDF is loaded
+                        if (!window.jspdf || !window.jspdf.jsPDF) {
+                            console.error('jsPDF is not loaded properly');
+                            alert('Error: PDF generation library not loaded. Please refresh the page.');
+                            return;
+                        }
+                        
+                        // Initialize PDF
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF('p', 'pt', 'a4');
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+                        const margin = 40;
+                        let yPosition = margin;
+                        
+                        // Add title
+                        doc.setFontSize(20);
+                        doc.setFont('helvetica', 'bold');
+                        
+                        // Determine report title based on type
+                        let reportTitle;
+                        switch(reportType) {
+                            case 'income':
+                                reportTitle = 'Income Report';
+                                break;
+                            case 'expense':
+                                reportTitle = 'Expense Report';
+                                break;
+                            default:
+                                reportTitle = 'Financial Report';
+                        }
+                        
+                        doc.text(reportTitle, pageWidth / 2, yPosition, { align: 'center' });
+                        yPosition += 30;
+                        
+                        // Add date range
+                        doc.setFontSize(12);
+                        doc.setFont('helvetica', 'normal');
+                        const dateRangeText = `Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`;
+                        doc.text(dateRangeText, pageWidth / 2, yPosition, { align: 'center' });
+                        yPosition += 30;
+                        
+                        // Add summary information if requested
+                        if (includeSummary) {
+                            doc.setFontSize(14);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('Financial Summary', margin, yPosition);
+                            yPosition += 20;
+                            
+                            doc.setFontSize(12);
+                            doc.setFont('helvetica', 'normal');
+                            
+                            // Get summary data from the page - add null checks
+                            const incomeCounter = document.getElementById('income-counter');
+                            const expenseCounter = document.getElementById('expense-counter');
+                            const balanceCounter = document.getElementById('balance-counter');
+                            
+                            const totalIncome = incomeCounter ? incomeCounter.textContent : '$0.00';
+                            const totalExpenses = expenseCounter ? expenseCounter.textContent : '$0.00';
+                            const balance = balanceCounter ? balanceCounter.textContent : '$0.00';
+                            
+                            // Create summary table
+                            const summaryData = [
+                                ['Total Income', totalIncome],
+                                ['Total Expenses', totalExpenses],
+                                ['Balance', balance]
+                            ];
+                            
+                            doc.autoTable({
+                                startY: yPosition,
+                                head: [['Item', 'Amount']],
+                                body: summaryData,
+                                theme: 'grid',
+                                headStyles: { fillColor: [40, 167, 69] },
+                                margin: { left: margin, right: margin },
+                                styles: { overflow: 'linebreak' },
+                                columnStyles: {
+                                    0: { cellWidth: 200 },
+                                    1: { cellWidth: 100 }
+                                }
+                            });
+                            
+                            yPosition = doc.previousAutoTable.finalY + 30;
+                        }
+                        
+                        // Add charts if requested - fixed chart handling to prevent errors
+                        if (includeCharts) {
+                            doc.setFontSize(14);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('Charts', margin, yPosition);
+                            yPosition += 20;
+                            
+                            // Function to add chart to PDF - with error handling
+                            async function addChartToPdf(chartId, title, docRef, yPos) {
+                                const chart = document.getElementById(chartId);
+                                if (!chart) {
+                                    console.warn(`Chart ${chartId} not found`);
+                                    return yPos;
+                                }
+                                
+                                docRef.setFontSize(12);
+                                docRef.setFont('helvetica', 'italic');
+                                docRef.text(title, margin, yPos);
+                                yPos += 15;
+                                
+                                try {
+                                    // Ensure any existing charts are properly handled
+                                    if (window.Chart && window.Chart.getChart) {
+                                        const existingChart = window.Chart.getChart(chart);
+                                        if (existingChart) {
+                                            // Create a copy of the canvas to avoid destroying the visible chart
+                                            const tempCanvas = document.createElement('canvas');
+                                            tempCanvas.width = chart.width;
+                                            tempCanvas.height = chart.height;
+                                            const tempCtx = tempCanvas.getContext('2d');
+                                            tempCtx.drawImage(chart, 0, 0);
+                                            
+                                            const chartImgData = tempCanvas.toDataURL('image/png');
+                                            
+                                            // Calculate the width and height to fit the page
+                                            const imgWidth = pageWidth - (margin * 2);
+                                            const imgHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
+                                            
+                                            // Check if the chart will fit on the current page
+                                            if (yPos + imgHeight > pageHeight - margin) {
+                                                docRef.addPage();
+                                                yPos = margin;
+                                            }
+                                            
+                                            docRef.addImage(chartImgData, 'PNG', margin, yPos, imgWidth, imgHeight);
+                                            return yPos + imgHeight + 20;
+                                        }
+                                    }
+                                    
+                                    // If no Chart.js chart was found, fallback to html2canvas
+                                    const canvas = await html2canvas(chart);
+                                    const chartImgData = canvas.toDataURL('image/png', 1.0); // Use 1.0 quality to avoid corruption
+                                    
+                                    // Calculate the width and height to fit the page
+                                    const imgWidth = pageWidth - (margin * 2);
+                                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                                    
+                                    // Check if the chart will fit on the current page
+                                    if (yPos + imgHeight > pageHeight - margin) {
+                                        docRef.addPage();
+                                        yPos = margin;
+                                    }
+                                    
+                                    docRef.addImage(chartImgData, 'PNG', margin, yPos, imgWidth, imgHeight);
+                                    return yPos + imgHeight + 20;
+                                } catch (error) {
+                                    console.error(`Error adding chart ${chartId} to PDF:`, error);
+                                    docRef.text(`Error including chart: ${error.message}`, margin, yPos);
+                                    return yPos + 20;
+                                }
+                            }
+                            
+                            // Add category chart - handle possible errors with try/catch
+                            try {
+                                yPosition = await addChartToPdf('categoryChart', 'Income and Expenses by Category', doc, yPosition);
+                            } catch (error) {
+                                console.error('Error adding category chart:', error);
+                                doc.text('Error including category chart', margin, yPosition);
+                                yPosition += 20;
+                            }
+                            
+                            // Add trend chart - handle possible errors with try/catch
+                            try {
+                                yPosition = await addChartToPdf('trendChart', 'Income vs Expenses Trend', doc, yPosition);
+                            } catch (error) {
+                                console.error('Error adding trend chart:', error);
+                                doc.text('Error including trend chart', margin, yPosition);
+                                yPosition += 20;
+                            }
+                        }
+                        
+                        // Add data tables based on report type - with error handling for table width
+                        async function addDataTablesToPdf() {
+                            const startDateObj = new Date(startDate);
+                            const endDateObj = new Date(endDate);
+                            
+                            // Helper function to check if a date is within the selected range
+                            function isDateInRange(dateStr) {
+                                // Convert the date string to a Date object
+                                // Assuming date format is 'MM/DD/YYYY' or 'YYYY-MM-DD' - adjust as needed
+                                const dateObj = new Date(dateStr);
+                                return dateObj >= startDateObj && dateObj <= endDateObj;
+                            }
+                            
+                            // Add income table if requested
+                            if (reportType === 'all' || reportType === 'income') {
+                                // Add page break if needed
+                                if (yPosition > pageHeight - 150) {
+                                    doc.addPage();
+                                    yPosition = margin;
+                                }
+                                
+                                doc.setFontSize(14);
+                                doc.setFont('helvetica', 'bold');
+                                doc.text('Income Data', margin, yPosition);
+                                yPosition += 20;
+                                
+                                const incomeTable = document.getElementById('incomeTable');
+                                if (incomeTable) {
+                                    const incomeData = [];
+                                    const incomeRows = incomeTable.querySelectorAll('tbody tr');
+                                    
+                                    incomeRows.forEach(row => {
+                                        const cells = row.querySelectorAll('td');
+                                        if (cells.length >= 4) {
+                                            const dateCell = cells[2].textContent.trim(); // Date
+                                            
+                                            // Only add rows that fall within the selected date range
+                                            if (isDateInRange(dateCell)) {
+                                                incomeData.push([
+                                                    dateCell,
+                                                    cells[0].textContent.trim(), // Amount
+                                                    cells[1].textContent.trim(), // Description
+                                                    cells[3].textContent.trim()  // Category
+                                                ]);
+                                            }
+                                        }
+                                    });
+                                    
+                                    if (incomeData.length > 0) {
+                                        // Adjust column widths to fit page
+                                        const availableWidth = pageWidth - (margin * 2);
+                                        
+                                        doc.autoTable({
+                                            startY: yPosition,
+                                            head: [['Date', 'Amount', 'Description', 'Category']],
+                                            body: incomeData,
+                                            theme: 'grid',
+                                            headStyles: { fillColor: [40, 167, 69] },
+                                            margin: { left: margin, right: margin },
+                                            styles: { overflow: 'linebreak', fontSize: 10 },
+                                            columnStyles: {
+                                                0: { cellWidth: availableWidth * 0.2 }, // Date
+                                                1: { cellWidth: availableWidth * 0.15 }, // Amount
+                                                2: { cellWidth: availableWidth * 0.45 }, // Description
+                                                3: { cellWidth: availableWidth * 0.2 }  // Category
+                                            }
+                                        });
+                                        
+                                        yPosition = doc.previousAutoTable.finalY + 30;
+                                    } else {
+                                        doc.setFontSize(12);
+                                        doc.setFont('helvetica', 'italic');
+                                        doc.text('No income data available for the selected date range', margin, yPosition);
+                                        yPosition += 20;
+                                    }
+                                }
+                            }
+                            
+                            // Add expense table if requested
+                            if (reportType === 'all' || reportType === 'expense') {
+                                // Add page break if needed
+                                if (yPosition > pageHeight - 150) {
+                                    doc.addPage();
+                                    yPosition = margin;
+                                }
+                                
+                                doc.setFontSize(14);
+                                doc.setFont('helvetica', 'bold');
+                                doc.text('Expense Data', margin, yPosition);
+                                yPosition += 20;
+                                
+                                // Fixed selector: there should only be one expense table
+                                const expenseTable = document.getElementById('expenseTable');
+                                if (expenseTable) {
+                                    const expenseData = [];
+                                    
+                                    const expenseRows = expenseTable.querySelectorAll('tbody tr');
+                                    expenseRows.forEach(row => {
+                                        const cells = row.querySelectorAll('td');
+                                        if (cells.length >= 4) {
+                                            const dateCell = cells[0].textContent.trim(); // Date
+                                            
+                                            // Only add rows that fall within the selected date range
+                                            if (isDateInRange(dateCell)) {
+                                                expenseData.push([
+                                                    dateCell,
+                                                    cells[1].textContent.trim(), // Amount
+                                                    cells[2].textContent.trim(), // Description
+                                                    cells[3].textContent.trim()  // Category
+                                                ]);
+                                            }
+                                        }
+                                    });
+                                    
+                                    if (expenseData.length > 0) {
+                                        // Adjust column widths to fit page
+                                        const availableWidth = pageWidth - (margin * 2);
+                                        
+                                        doc.autoTable({
+                                            startY: yPosition,
+                                            head: [['Date', 'Amount', 'Description', 'Category']],
+                                            body: expenseData,
+                                            theme: 'grid',
+                                            headStyles: { fillColor: [220, 53, 69] },
+                                            margin: { left: margin, right: margin },
+                                            styles: { overflow: 'linebreak', fontSize: 10 },
+                                            columnStyles: {
+                                                0: { cellWidth: availableWidth * 0.2 }, // Date
+                                                1: { cellWidth: availableWidth * 0.15 }, // Amount
+                                                2: { cellWidth: availableWidth * 0.45 }, // Description
+                                                3: { cellWidth: availableWidth * 0.2 }  // Category
+                                            }
+                                        });
+                                        
+                                        yPosition = doc.previousAutoTable.finalY + 30;
+                                    } else {
+                                        doc.setFontSize(12);
+                                        doc.setFont('helvetica', 'italic');
+                                        doc.text('No expense data available for the selected date range', margin, yPosition);
+                                        yPosition += 20;
+                                    }
+                                }
+                            }
+                            
+                            // Also update the summary information to reflect the date range
+                            if (includeSummary) {
+                                // Recalculate totals based on filtered data
+                                let filteredIncome = 0;
+                                let filteredExpenses = 0;
+                                
+                                // Sum up filtered income - add error handling
+                                try {
+                                    const incomeRows = document.querySelectorAll('#incomeTable tbody tr');
+                                    incomeRows.forEach(row => {
+                                        const cells = row.querySelectorAll('td');
+                                        if (cells.length >= 4) {
+                                            const dateCell = cells[2].textContent.trim();
+                                            if (isDateInRange(dateCell)) {
+                                                // Remove currency symbol and convert to number
+                                                const amount = parseFloat(cells[0].textContent.trim().replace(/[^0-9.-]+/g, ''));
+                                                if (!isNaN(amount)) {
+                                                    filteredIncome += amount;
+                                                }
+                                            }
+                                        }
+                                    });
+                                } catch (error) {
+                                    console.error('Error calculating filtered income:', error);
+                                }
+                                
+                                // Sum up filtered expenses - add error handling
+                                try {
+                                    const expenseRows = document.querySelectorAll('#expenseTable tbody tr');
+                                    expenseRows.forEach(row => {
+                                        const cells = row.querySelectorAll('td');
+                                        if (cells.length >= 4) {
+                                            const dateCell = cells[0].textContent.trim();
+                                            if (isDateInRange(dateCell)) {
+                                                // Remove currency symbol and convert to number
+                                                const amount = parseFloat(cells[1].textContent.trim().replace(/[^0-9.-]+/g, ''));
+                                                if (!isNaN(amount)) {
+                                                    filteredExpenses += amount;
+                                                }
+                                            }
+                                        }
+                                    });
+                                } catch (error) {
+                                    console.error('Error calculating filtered expenses:', error);
+                                }
+                                
+                                const filteredBalance = filteredIncome - filteredExpenses;
+                                
+                                // Update summary section
+                                doc.setFontSize(14);
+                                doc.setFont('helvetica', 'bold');
+                                doc.text('Financial Summary (Filtered by Date Range)', margin, yPosition);
+                                yPosition += 20;
+                                
+                                doc.setFontSize(12);
+                                doc.setFont('helvetica', 'normal');
+                                
+                                // Create summary table with filtered data
+                                const summaryData = [
+                                    ['Total Income', `$${filteredIncome.toFixed(2)}`],
+                                    ['Total Expenses', `$${filteredExpenses.toFixed(2)}`],
+                                    ['Balance', `$${filteredBalance.toFixed(2)}`]
+                                ];
+                                
+                                doc.autoTable({
+                                    startY: yPosition,
+                                    head: [['Item', 'Amount']],
+                                    body: summaryData,
+                                    theme: 'grid',
+                                    headStyles: { fillColor: [40, 167, 69] },
+                                    margin: { left: margin, right: margin },
+                                    styles: { overflow: 'linebreak' },
+                                    columnStyles: {
+                                        0: { cellWidth: 200 },
+                                        1: { cellWidth: 100 }
+                                    }
+                                });
+                                
+                                yPosition = doc.previousAutoTable.finalY + 30;
+                            }
+                            
+                            // Add footer
+                            const footerText = `Generated on ${formatDate(new Date().toISOString().split('T')[0])} by FinSage`;
+                            const footerTextWidth = doc.getTextWidth(footerText);
+                            
+                            doc.setFontSize(10);
+                            doc.setTextColor(100);
+                            
+                            // Add to all pages
+                            const pageCount = doc.internal.getNumberOfPages();
+                            for (let i = 1; i <= pageCount; i++) {
+                                doc.setPage(i);
+                                doc.text(footerText, pageWidth - margin - footerTextWidth, pageHeight - margin);
+                                doc.text(`Page ${i} of ${pageCount}`, margin, pageHeight - margin);
+                            }
+                            
+                            // Save the PDF
+                            doc.save(`FinSage_${reportType}_Report_${formatDateFilename(new Date())}.pdf`);
+                            
+                            // Close the modal
+                            if (pdfExportModal) pdfExportModal.hide();
+                        }
+                        // Call the function to add data tables
+                        addDataTablesToPdf();
+                    } catch (error) {
+                        console.error('Error generating PDF:', error);
+                        alert('An error occurred while generating the PDF. Please try again or check the console for details.');
+                    }
+                });
+            }
+
+            // Helper function to format dates for display
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+
+            // Helper function to format dates for filenames
+            function formatDateFilename(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            // Trend Chart
+            var ctx = document.getElementById('trendChart').getContext('2d');
+            
+            var chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
+            var chartIncome = JSON.parse(document.getElementById('chart-income').textContent);
+            var chartExpenses = JSON.parse(document.getElementById('chart-expenses').textContent);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: chartIncome,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: true
+                        },
+                        {
+                            label: 'Expenses',
+                            data: chartExpenses,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-IN', { 
+                                            style: 'currency', 
+                                            currency: 'INR',
+                                            maximumFractionDigits: 0
+                                        }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Category Chart
+            var ctxCategory = document.getElementById('categoryChart').getContext('2d');
+            
+            var categories = JSON.parse(document.getElementById('chart-categories').textContent);
+            var incomeData = JSON.parse(document.getElementById('chart-income-data').textContent);
+            var expenseData = JSON.parse(document.getElementById('chart-expense-data').textContent);
+            
+            // Calculate net values for data labels
+            var netValues = incomeData.map((income, index) => income - expenseData[index]);
+            
+            // Custom gradient backgrounds
+            function createGradient(ctx, color1, color2) {
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, color1);
+                gradient.addColorStop(1, color2);
+                return gradient;
+            }
+            
+            const incomeGradient = createGradient(ctxCategory, 'rgba(40, 167, 69, 0.8)', 'rgba(40, 167, 69, 0.3)');
+            const expenseGradient = createGradient(ctxCategory, 'rgba(220, 53, 69, 0.8)', 'rgba(220, 53, 69, 0.3)');
+            new Chart(ctxCategory, {
+            type: 'bar',
             data: {
-                labels: chartLabels,
+                labels: categories,
                 datasets: [
                     {
                         label: 'Income',
-                        data: chartIncome,
+                        data: incomeData,
+                        backgroundColor: incomeGradient,
                         borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
                         borderWidth: 2,
-                        tension: 0.1,
-                        fill: true
+                        borderRadius: 6,
+                        hoverBorderWidth: 3,
+                        hoverBorderColor: '#1d9438'
                     },
                     {
                         label: 'Expenses',
-                        data: chartExpenses,
+                        data: expenseData,
+                        backgroundColor: expenseGradient,
                         borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
                         borderWidth: 2,
-                        tension: 0.1,
-                        fill: true
+                        borderRadius: 6,
+                        hoverBorderWidth: 3,
+                        hoverBorderColor: '#c82333'
                     }
                 ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                layout: {
+                    padding: {
+                        top: 10,
+                        right: 25,
+                        bottom: 10,
+                        left: 25
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(200, 200, 200, 0.2)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('en-IN', { 
+                                    style: 'currency', 
+                                    currency: 'INR',
+                                    maximumFractionDigits: 0
+                                }).format(value);
+                            },
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
                         title: {
                             display: true,
-                            text: 'Amount'
+                            text: 'Amount (₹)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: {top: 10, bottom: 10}
                         }
                     },
                     x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
                         title: {
                             display: true,
-                            text: 'Month'
+                            text: 'Category',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: {top: 10, bottom: 10}
                         }
                     }
                 },
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            boxWidth: 15,
+                            usePointStyle: true,
+                            pointStyle: 'rectRounded',
+                            padding: 20,
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 14
+                        },
+                        padding: 12,
+                        cornerRadius: 6,
                         callbacks: {
                             label: function(context) {
                                 var label = context.dataset.label || '';
@@ -362,244 +1236,107 @@
                                     }).format(context.parsed.y);
                                 }
                                 return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Category Chart - Enhanced Version
-    var ctxCategory = document.getElementById('categoryChart').getContext('2d');
-
-    var categories = JSON.parse(document.getElementById('chart-categories').textContent);
-    var incomeData = JSON.parse(document.getElementById('chart-income-data').textContent);
-    var expenseData = JSON.parse(document.getElementById('chart-expense-data').textContent);
-
-    // Calculate net values for data labels
-    var netValues = incomeData.map((income, index) => income - expenseData[index]);
-
-    // Custom gradient backgrounds
-    function createGradient(ctx, color1, color2) {
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, color1);
-        gradient.addColorStop(1, color2);
-        return gradient;
-    }
-
-    const incomeGradient = createGradient(ctxCategory, 'rgba(40, 167, 69, 0.8)', 'rgba(40, 167, 69, 0.3)');
-    const expenseGradient = createGradient(ctxCategory, 'rgba(220, 53, 69, 0.8)', 'rgba(220, 53, 69, 0.3)');
-
-    new Chart(ctxCategory, {
-        type: 'bar',
-        data: {
-            labels: categories,
-            datasets: [
-                {
-                    label: 'Income',
-                    data: incomeData,
-                    backgroundColor: incomeGradient,
-                    borderColor: '#28a745',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    hoverBorderWidth: 3,
-                    hoverBorderColor: '#1d9438'
-                },
-                {
-                    label: 'Expenses',
-                    data: expenseData,
-                    backgroundColor: expenseGradient,
-                    borderColor: '#dc3545',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    hoverBorderWidth: 3,
-                    hoverBorderColor: '#c82333'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-                duration: 1000,
-                easing: 'easeOutQuart'
-            },
-            layout: {
-                padding: {
-                    top: 10,
-                    right: 25,
-                    bottom: 10,
-                    left: 25
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(200, 200, 200, 0.2)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return new Intl.NumberFormat('en-IN', { 
-                                style: 'currency', 
-                                currency: 'INR',
-                                maximumFractionDigits: 0
-                            }).format(value);
-                        },
-                        font: {
-                            weight: 'bold'
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Amount (₹)',
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        padding: {top: 10, bottom: 10}
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        font: {
-                            weight: 'bold'
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Category',
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        padding: {top: 10, bottom: 10}
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        boxWidth: 15,
-                        usePointStyle: true,
-                        pointStyle: 'rectRounded',
-                        padding: 20,
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleFont: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    bodyFont: {
-                        size: 14
-                    },
-                    padding: 12,
-                    cornerRadius: 6,
-                    callbacks: {
-                        label: function(context) {
-                            var label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('en-IN', { 
+                            },
+                            afterBody: function(tooltipItems) {
+                                const idx = tooltipItems[0].dataIndex;
+                                const net = netValues[idx];
+                                const netFormatted = new Intl.NumberFormat('en-IN', { 
                                     style: 'currency', 
                                     currency: 'INR',
                                     maximumFractionDigits: 0
-                                }).format(context.parsed.y);
+                                }).format(net);
+                                
+                                return `Net: ${netFormatted} (${net >= 0 ? '+' : ''}${(net / expenseData[idx] * 100).toFixed(1)}%)`;
                             }
-                            return label;
+                        }
+                    },
+                    datalabels: {
+                        display: function(context) {
+                            return context.dataset.data[context.dataIndex] > 0;
                         },
-                        afterBody: function(tooltipItems) {
-                            const idx = tooltipItems[0].dataIndex;
-                            const net = netValues[idx];
-                            const netFormatted = new Intl.NumberFormat('en-IN', { 
-                                style: 'currency', 
-                                currency: 'INR',
-                                maximumFractionDigits: 0
-                            }).format(net);
-                            
-                            return `Net: ${netFormatted} (${net >= 0 ? '+' : ''}${(net / expenseData[idx] * 100).toFixed(1)}%)`;
+                        color: function(context) {
+                            return context.dataset.borderColor;
+                        },
+                        font: {
+                            weight: 'bold'
+                        },
+                        formatter: function(value) {
+                            if (value > 10000) {
+                                return new Intl.NumberFormat('en-IN', { 
+                                    style: 'currency', 
+                                    currency: 'INR',
+                                    notation: 'compact',
+                                    compactDisplay: 'short',
+                                    maximumFractionDigits: 1
+                                }).format(value);
+                            }
+                            return '';
                         }
-                    }
-                },
-                datalabels: {
-                    display: function(context) {
-                        return context.dataset.data[context.dataIndex] > 0;
-                    },
-                    color: function(context) {
-                        return context.dataset.borderColor;
-                    },
-                    font: {
-                        weight: 'bold'
-                    },
-                    formatter: function(value) {
-                        if (value > 10000) {
-                            return new Intl.NumberFormat('en-IN', { 
-                                style: 'currency', 
-                                currency: 'INR',
-                                notation: 'compact',
-                                compactDisplay: 'short',
-                                maximumFractionDigits: 1
-                            }).format(value);
-                        }
-                        return '';
                     }
                 }
-            }
-        },
-        plugins: [ChartDataLabels] // Make sure to include this library in your HTML
-    });
-
-    // FAB Button functionality - Enhanced
-    const fabButton = document.getElementById('fabButton');
-    const fabOptions = document.getElementById('fabOptions');
-
-    if (fabButton) {
-        fabButton.addEventListener('click', function() {
-            fabOptions.classList.toggle('active');
+            },
+            plugins: [ChartDataLabels] // Make sure to include this library in your HTML
         });
+    
+        // FAB Button functionality - Enhanced
+        const fabButton = document.getElementById('fabButton');
+        const fabOptions = document.getElementById('fabOptions');
+    
+        if (fabButton) {
+            fabButton.addEventListener('click', function() {
+                fabOptions.classList.toggle('active');
+            });
+            
+            // Auto-hide FAB options when clicking elsewhere
+            document.addEventListener('click', function(event) {
+                if (!fabButton.contains(event.target) && !fabOptions.contains(event.target)) {
+                    fabOptions.classList.remove('active');
+                }
+            });
+        }
+    
+        // Add download functionality
+        document.getElementById('downloadChart').addEventListener('click', function() {
+            const canvas = document.getElementById('categoryChart');
+            const image = canvas.toDataURL('image/png', 1.0);
+            const link = document.createElement('a');
+            link.download = 'category-financial-chart.png';
+            link.href = image;
+            link.click();
+        });
+    
+        // Add chart animation refresh button
+        document.getElementById('refreshChart').addEventListener('click', function() {
+            const chart = Chart.getChart('categoryChart');
+            chart.update('none');
+            chart.options.animation.duration = 1000;
+            chart.reset();
+            setTimeout(() => {
+                chart.update();
+            }, 100);
+        });
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the tab from localStorage if it exists
+        const activeTab = localStorage.getItem('activeFinSageTab');
         
-        // Auto-hide FAB options when clicking elsewhere
-        document.addEventListener('click', function(event) {
-            if (!fabButton.contains(event.target) && !fabOptions.contains(event.target)) {
-                fabOptions.classList.remove('active');
+        if (activeTab) {
+            // Activate the tab if it exists
+            const tab = document.querySelector(activeTab);
+            if (tab) {
+                const bsTab = new bootstrap.Tab(tab);
+                bsTab.show();
             }
+        }
+        
+        // Store the active tab in localStorage when a tab is clicked
+        const tabEls = document.querySelectorAll('#mainTabs button');
+        tabEls.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                localStorage.setItem('activeFinSageTab', '#' + event.target.id);
+            });
         });
-    }
-
-    // Add download functionality
-    document.getElementById('downloadChart').addEventListener('click', function() {
-        const canvas = document.getElementById('categoryChart');
-        const image = canvas.toDataURL('image/png', 1.0);
-        const link = document.createElement('a');
-        link.download = 'category-financial-chart.png';
-        link.href = image;
-        link.click();
     });
-
-    // Add chart animation refresh button
-    document.getElementById('refreshChart').addEventListener('click', function() {
-        const chart = Chart.getChart('categoryChart');
-        chart.update('none');
-        chart.options.animation.duration = 1000;
-        chart.reset();
-        setTimeout(() => {
-            chart.update();
-        }, 100);
-    });
-});
-</script>
+    </script>
 </body>
 </html>
